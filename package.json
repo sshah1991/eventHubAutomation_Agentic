@@ -6,8 +6,14 @@
   "scripts": {
     "test": "playwright test",
     "test:smoke": "playwright test --grep @smoke",
+    "test:sanity": "playwright test --grep @sanity",
+    "test:regression": "playwright test --grep @regression",
     "test:headed": "playwright test --headed",
-    "report": "playwright show-report test-results"
+    "report": "playwright show-report test-results",
+    "report:allure": "npx allure generate -o allure-report && npx allure open allure-report",
+    "report:allure:serve": "npx allure serve allure-results",
+    "test:allure": "playwright test && npx allure generate -o allure-report && npx allure open allure-report",
+    "test:regression:allure": "playwright test --grep @regression && npx allure generate -o allure-report && npx allure open allure-report"
   },
   "keywords": [],
   "author": "",
@@ -16,6 +22,7 @@
   "devDependencies": {
     "@playwright/test": "^1.60.0",
     "@types/node": "^25.9.1",
+    "allure-playwright": "^3.9.0",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3"
   }

@@ -14,15 +14,31 @@
     "emailDomain": "@test.com",
     "password": "Smoke@123"
   },
-  "shortPassword": "Ab@12",
-  "protectedRoutes": ["/events", "/bookings", "/admin/events"],
-  "sqlInjectionPayload": "' OR '1'='1",
-  "xssEmailPayload": "<script>alert('xss')</script>@test.com",
-  "tamperedToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dGFtcGVyZWQtcGF5bG9hZA.invalidsignature",
   "nonExistentUser": {
     "email": "nonexistent_xyz_99999@test.com",
     "password": "AnyPass@1"
   },
+  "shortPassword": "Ab@12",
+  "exactSixCharPassword": "Ab@123",
+  "spacesOnlyPassword": "      ",
+  "invalidEmailFormat": "notanemail",
+  "subdomainEmail": "user+tag@subdomain.test.com",
+  "emailWithSpaces": "  sumeetshah.tsk@gmail.com  ",
+  "specialCharPassword": "P@$$w0rd!",
+  "specialCharPasswordWrong": "P@$$w0rd",
+  "longEmailConfig": {
+    "localPartLength": 246,
+    "domain": "@test.com"
+  },
+  "longPasswordConfig": {
+    "prefix": "A1@",
+    "totalLength": 1000
+  },
+  "bruteForceAttempts": 5,
+  "protectedRoutes": ["/events", "/bookings", "/admin/events"],
+  "sqlInjectionPayload": "' OR '1'='1",
+  "xssEmailPayload": "<script>alert('xss')</script>@test.com",
+  "tamperedToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dGFtcGVyZWQtcGF5bG9hZA.invalidsignature",
   "bookingData": {
     "eventId": 1,
     "quantity": 1,

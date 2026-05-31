@@ -182,11 +182,11 @@
 4. Submit the form
 
 **Expected Results**:
-- HTTP 409 response: `"Email already registered"`
+- HTTP 400 response: `"Email already registered"` *(⚠️ API returns 400, not 409 — verified 2026-05-31)*
 - No new account or JWT created
 - Error shown to user on the registration form
 
-**Business Rule**: API Reference — Duplicate email → 409  
+**Business Rule**: API Reference — Duplicate email → 400 (actual; originally documented as 409)  
 **Suggested Layer**: E2E, API  
 **Test Type**: REGRESSION
 
@@ -221,11 +221,11 @@
 4. Submit
 
 **Expected Results**:
-- HTTP 401: `"Invalid credentials"`
+- HTTP 400: `"Invalid email or password"` *(⚠️ API returns 400 not 401, message differs — verified 2026-05-31)*
 - No JWT issued
 - Error message displayed on login form
 
-**Business Rule**: API Reference — Invalid login credentials → 401  
+**Business Rule**: API Reference — Invalid login credentials → 400 (actual; originally documented as 401)  
 **Suggested Layer**: E2E, API  
 **Test Type**: REGRESSION
 
@@ -419,11 +419,11 @@
 1. Attempt login with wrong password 10 consecutive times for the same email
 
 **Expected Results**:
-- Each attempt returns 401 `"Invalid credentials"`
+- Each attempt returns 400 `"Invalid email or password"` *(⚠️ API returns 400 not 401 — verified 2026-05-31)*
 - Application remains stable (no crash or data leakage)
 - Ideally: rate limiting or lockout message appears after N failures
 
-**Business Rule**: Security best practice; API Reference — 401 on invalid credentials  
+**Business Rule**: Security best practice; API Reference — 400 on invalid credentials (actual)  
 **Suggested Layer**: API  
 **Test Type**: REGRESSION
 
@@ -517,11 +517,11 @@
 3. Submit
 
 **Expected Results**:
-- HTTP 401: `"Invalid credentials"`
+- HTTP 400: `"Invalid email or password"` *(⚠️ API returns 400 not 401 — verified 2026-05-31)*
 - No JWT issued
 - Appropriate error message shown on UI (must NOT reveal whether the email exists)
 
-**Business Rule**: API Reference — Invalid credentials → 401  
+**Business Rule**: API Reference — Invalid credentials → 400 (actual; originally documented as 401)  
 **Suggested Layer**: E2E, API  
 **Test Type**: REGRESSION
 
@@ -535,10 +535,10 @@
 1. Attempt `POST /api/auth/register` with `{ email: "sumeetshah.tsk@gmail.com", password: "Quinn0x@1" }`
 
 **Expected Results**:
-- HTTP 409: `"Email already registered"`
+- HTTP 400: `"Email already registered"` *(⚠️ API returns 400 not 409 — verified 2026-05-31)*
 - No duplicate user or new JWT created
 
-**Business Rule**: API Reference — Duplicate email → 409  
+**Business Rule**: API Reference — Duplicate email → 400 (actual; originally documented as 409)  
 **Suggested Layer**: API  
 **Test Type**: REGRESSION
 
@@ -667,9 +667,9 @@
 
 **Expected Results**:
 - Step 2: Login succeeds
-- Step 3: HTTP 401 `"Invalid credentials"` — passwords are exact-match verified
+- Step 3: HTTP 400 `"Invalid email or password"` — passwords are exact-match verified *(⚠️ API returns 400 not 401 — verified 2026-05-31)*
 
-**Business Rule**: API Reference — Invalid credentials → 401  
+**Business Rule**: API Reference — Invalid credentials → 400 (actual; originally documented as 401)  
 **Suggested Layer**: API  
 **Test Type**: REGRESSION
 
@@ -798,7 +798,7 @@
 
 **Expected Results**:
 - Only one registration succeeds (HTTP 201)
-- The other returns HTTP 409 `"Email already registered"`
+- The other returns HTTP 400 `"Email already registered"` *(⚠️ API returns 400 not 409 — verified 2026-05-31)*
 - No duplicate accounts created in the database
 
 **Business Rule**: BusinessRules §2 — email uniqueness must be enforced atomically  
@@ -836,7 +836,7 @@
 
 **Expected Results**:
 - Either trims whitespace and authenticates successfully, OR
-- Rejects with `"Invalid credentials"`
+- Rejects with HTTP 400 `"Invalid email or password"` *(⚠️ API returns 400 not 401 — verified 2026-05-31)*
 - Consistent behavior documented
 
 **Business Rule**: Input sanitization — email trimming behavior  
@@ -877,11 +877,11 @@
 3. Observe the UI
 
 **Expected Results**:
-- Error message (e.g., `"Invalid credentials"`) appears in the UI
+- Error message (e.g., `"Invalid email or password"`) appears in the UI *(⚠️ actual message differs from originally documented "Invalid credentials" — verified 2026-05-31)*
 - User remains on the `/login` page
 - No partial redirect or blank screen
 
-**Business Rule**: API Reference — 401 error message displayed to user  
+**Business Rule**: API Reference — 400 error message displayed to user (actual; originally documented as 401)  
 **Suggested Layer**: E2E  
 **Test Type**: SMOKE
 
