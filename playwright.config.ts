@@ -4,7 +4,19 @@ export default defineConfig({
   testDir: './tests',
   timeout: 30000,
   retries: 1,
-  reporter: [['html', { outputFolder: 'test-results' }], ['list']],
+  reporter: [
+    ['list'],
+    ['html', { outputFolder: 'test-results' }],
+    ['allure-playwright', {
+      outputFolder: 'allure-results',
+      suiteTitle: false,
+      environmentInfo: {
+        project: 'EventHub Automation',
+        environment: 'staging',
+        baseUrl: 'https://eventhub.rahulshettyacademy.com',
+      },
+    }],
+  ],
   use: {
     browserName: 'chromium',
     headless: !!process.env.CI,
