@@ -1,0 +1,28 @@
+{
+  "baseUrl": "https://eventhub.rahulshettyacademy.com",
+  "apiUrl": "https://api.eventhub.rahulshettyacademy.com",
+  "validUser": {
+    "email": "sumeetshah.tsk@gmail.com",
+    "password": "Quinn0x@1"
+  },
+  "staticEvent": {
+    "id": 1,
+    "title": "Tech Conference Bangalore",
+    "price": 1499,
+    "firstLetter": "T"
+  },
+  "newBooking": {
+    "eventId": 1,
+    "quantity": 1,
+    "customerName": "Automation Tester",
+    "customerEmail": "sumeetshah.tsk@gmail.com",
+    "customerPhone": "+91 98765 43210"
+  },
+  "multiTicketBooking": {
+    "eventId": 1,
+    "quantity": 3,
+    "customerName": "Group Tester",
+    "customerEmail": "sumeetshah.tsk@gmail.com",
+    "customerPhone": "+91 98765 43211"
+  }
+}
