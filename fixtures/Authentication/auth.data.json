@@ -1,0 +1,16 @@
+{
+  "baseUrl": "https://eventhub.rahulshettyacademy.com",
+  "validUser": {
+    "email": "sumeetshah.tsk@gmail.com",
+    "password": "Quinn0x@1"
+  },
+  "invalidUser": {
+    "email": "wrong@test.com",
+    "password": "WrongPass@1"
+  },
+  "newUserRegistration": {
+    "emailPrefix": "smoketest_",
+    "emailDomain": "@test.com",
+    "password": "Smoke@123"
+  }
+}
