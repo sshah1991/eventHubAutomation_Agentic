@@ -1,0 +1,30 @@
+{
+  "baseUrl": "https://eventhub.rahulshettyacademy.com",
+  "apiUrl": "https://api.eventhub.rahulshettyacademy.com",
+  "userA": {
+    "email": "sumeetshah.tsk@gmail.com",
+    "password": "Quinn0x@1"
+  },
+  "userBTemplate": {
+    "emailPrefix": "crossuser_userb_",
+    "emailDomain": "@test.com",
+    "password": "CrossUser@123"
+  },
+  "testEventTemplate": {
+    "title": "CUS Test Event",
+    "description": "CrossUserSecurity automation test event",
+    "category": "Conference",
+    "city": "Bangalore",
+    "venue": "CUS Test Venue",
+    "date": "2030-12-31",
+    "eventDate": "2030-12-31T00:00:00.000Z",
+    "price": 100,
+    "totalSeats": 50
+  },
+  "testBookingTemplate": {
+    "quantity": 1,
+    "customerName": "CUS Tester A",
+    "customerPhone": "+91 98765 43210"
+  },
+  "staticEventId": 1
+}
