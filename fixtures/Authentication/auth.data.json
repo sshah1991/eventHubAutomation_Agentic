@@ -15,5 +15,18 @@
     "password": "Smoke@123"
   },
   "shortPassword": "Ab@12",
-  "protectedRoutes": ["/events", "/bookings", "/admin/events"]
+  "protectedRoutes": ["/events", "/bookings", "/admin/events"],
+  "sqlInjectionPayload": "' OR '1'='1",
+  "xssEmailPayload": "<script>alert('xss')</script>@test.com",
+  "tamperedToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dGFtcGVyZWQtcGF5bG9hZA.invalidsignature",
+  "nonExistentUser": {
+    "email": "nonexistent_xyz_99999@test.com",
+    "password": "AnyPass@1"
+  },
+  "bookingData": {
+    "eventId": 1,
+    "quantity": 1,
+    "customerName": "Automation Tester",
+    "customerPhone": "+91 98765 43210"
+  }
 }
