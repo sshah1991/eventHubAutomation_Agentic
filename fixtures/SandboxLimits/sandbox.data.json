@@ -1,0 +1,26 @@
+{
+  "baseUrl": "https://eventhub.rahulshettyacademy.com",
+  "apiUrl": "https://api.eventhub.rahulshettyacademy.com",
+  "validUser": {
+    "email": "sumeetshah.tsk@gmail.com",
+    "password": "Quinn0x@1"
+  },
+  "sandboxEventLimit": 6,
+  "sandboxBookingLimit": 9,
+  "testEventTemplate": {
+    "description": "SandboxLimits automation test event",
+    "category": "Conference",
+    "city": "Bangalore",
+    "venue": "SL Test Venue",
+    "date": "2030-12-31",
+    "eventDate": "2030-12-31T00:00:00.000Z",
+    "price": 100,
+    "totalSeats": 50
+  },
+  "testBookingTemplate": {
+    "quantity": 1,
+    "customerName": "SL Tester",
+    "customerEmail": "sumeetshah.tsk@gmail.com",
+    "customerPhone": "+91 98765 43210"
+  }
+}
