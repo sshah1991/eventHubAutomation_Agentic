@@ -1,5 +1,6 @@
 {
   "baseUrl": "https://eventhub.rahulshettyacademy.com",
+  "apiUrl": "https://api.eventhub.rahulshettyacademy.com",
   "validUser": {
     "email": "sumeetshah.tsk@gmail.com",
     "password": "Quinn0x@1"
