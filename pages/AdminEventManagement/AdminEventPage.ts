@@ -27,6 +27,7 @@ export class AdminEventPage {
   readonly successToast: Locator;
   readonly updateSuccessToast: Locator;
   readonly logoutBtn: Locator;
+  readonly cancelDeleteDialogBtn: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -42,6 +43,7 @@ export class AdminEventPage {
     this.successToast = page.getByText('Event created!');
     this.updateSuccessToast = page.getByText(/event updated/i);
     this.logoutBtn = page.getByRole('button', { name: 'Logout' });
+    this.cancelDeleteDialogBtn = page.getByRole('button', { name: 'Cancel' });
   }
 
   async goto(baseUrl: string): Promise<void> {
@@ -81,6 +83,12 @@ export class AdminEventPage {
     await this.getEventRow(title).getByRole('button', { name: /delete/i }).click();
     // Confirm deletion in the React modal ("Delete event" button)
     await this.page.getByRole('button', { name: 'Delete event' }).click();
+  }
+
+  async clickDeleteThenCancelForEvent(title: string): Promise<void> {
+    log.info(`Clicking Delete then cancelling for: "${title}"`);
+    await this.getEventRow(title).getByRole('button', { name: /delete/i }).click();
+    await this.cancelDeleteDialogBtn.click();
   }
 
   async fillUpdateForm(updates: Partial<EventFormData>): Promise<void> {

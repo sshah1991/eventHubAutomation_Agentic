@@ -25,5 +25,18 @@
   "staticEvent": {
     "id": 1,
     "title": "Tech Conference Bangalore"
+  },
+  "pastDate": "2020-01-01",
+  "xssTitle": "<img src=x onerror=alert('xss')>",
+  "bookingTemplate": {
+    "quantity": 1,
+    "customerName": "Admin Regression Tester",
+    "customerEmail": "sumeetshah.tsk@gmail.com",
+    "customerPhone": "+91 98765 43210"
+  },
+  "userBTemplate": {
+    "emailPrefix": "admintest_userb_",
+    "emailDomain": "@test.com",
+    "password": "AdminTest@123"
   }
 }
