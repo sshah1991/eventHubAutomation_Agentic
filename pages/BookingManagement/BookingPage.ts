@@ -45,10 +45,10 @@ export class BookingPage {
     this.qtyDecreaseBtn = page.getByRole('button', { name: '-' });
     this.quantityDisplay = page.getByTestId('quantity-display');
 
-    // Customer booking form
-    this.customerNameInput = page.getByLabel(/customer name/i);
-    this.customerEmailInput = page.getByLabel(/customer email/i);
-    this.customerPhoneInput = page.getByLabel(/phone/i);
+    // Customer booking form (labels: "Full Name *", "Email *", "Phone Number *")
+    this.customerNameInput = page.getByPlaceholder('Your full name');
+    this.customerEmailInput = page.getByPlaceholder('you@email.com');
+    this.customerPhoneInput = page.getByLabel(/phone number/i);
     this.confirmBookingBtn = page.getByRole('button', { name: /confirm booking/i });
 
     // Post-booking confirmation navigation
@@ -56,12 +56,12 @@ export class BookingPage {
     this.browseEventsLink = page.getByRole('link', { name: /browse events/i });
 
     // Bookings list (/bookings)
-    this.clearAllBtn = page.getByRole('button', { name: /clear all/i });
-    this.emptyStateText = page.getByText(/no bookings/i);
+    this.clearAllBtn = page.getByRole('button', { name: /clear all bookings/i });
+    this.emptyStateText = page.getByText(/no bookings yet/i);
 
     // Booking detail (/bookings/:id)
-    this.cancelBookingBtn = page.getByRole('button', { name: /cancel/i });
-    this.checkRefundBtn = page.getByRole('button', { name: /check refund/i });
+    this.cancelBookingBtn = page.getByRole('button', { name: /cancel booking/i });
+    this.checkRefundBtn = page.getByRole('button', { name: /check eligibility/i });
     this.refundResultMsg = page.getByTestId('refund-result');
   }
 
@@ -99,7 +99,8 @@ export class BookingPage {
   }
 
   getBookingRefLocator(): Locator {
-    return this.page.getByTestId('booking-ref');
+    // Matches booking reference format: X-XXXXXX anywhere on the confirmation page
+    return this.page.getByText(/\b[A-Z]-[A-Z0-9]{6}\b/).first();
   }
 
   getBookingCard(bookingRef: string): Locator {

@@ -6,20 +6,20 @@
     "password": "Quinn0x@1"
   },
   "staticEvent": {
-    "id": 1,
-    "title": "Tech Conference Bangalore",
-    "price": 1499,
-    "firstLetter": "T"
+    "id": 3,
+    "title": "Dilli Diwali Mela",
+    "price": 300,
+    "firstLetter": "D"
   },
   "newBooking": {
-    "eventId": 1,
+    "eventId": 3,
     "quantity": 1,
     "customerName": "Automation Tester",
     "customerEmail": "sumeetshah.tsk@gmail.com",
     "customerPhone": "+91 98765 43210"
   },
   "multiTicketBooking": {
-    "eventId": 1,
+    "eventId": 3,
     "quantity": 3,
     "customerName": "Group Tester",
     "customerEmail": "sumeetshah.tsk@gmail.com",

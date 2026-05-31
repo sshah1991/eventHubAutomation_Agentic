@@ -30,19 +30,19 @@ async function createBookingViaApi(
   request: APIRequestContext,
   token: string,
   data: CreateBookingInput
-): Promise<string> {
+): Promise<number> {
   const res = await request.post(`${apiUrl}/api/bookings`, {
     headers: { Authorization: `Bearer ${token}` },
     data,
   });
   const { data: booking } = await res.json();
-  return booking.id as string;
+  return booking.id as number;
 }
 
 async function deleteBookingViaApi(
   request: APIRequestContext,
   token: string,
-  bookingId: string
+  bookingId: number
 ): Promise<void> {
   await request.delete(`${apiUrl}/api/bookings/${bookingId}`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -60,7 +60,7 @@ test.describe('BookingManagement', () => {
     { tag: '@smoke' },
     async ({ request }) => {
       const token = await getAuthToken(request);
-      let bookingId: string | undefined;
+      let bookingId: number | undefined;
 
       try {
         // -- Step 1: POST a new booking for a static event --
@@ -74,11 +74,11 @@ test.describe('BookingManagement', () => {
         const { data } = await response.json();
         bookingId = data.id;
         expect(data.id).toBeTruthy();
-        expect(data.bookingReference).toBeTruthy();
+        expect(data.bookingRef).toBeTruthy();
         expect(data.quantity).toBe(newBooking.quantity);
         expect(Number(data.totalPrice)).toBe(staticEvent.price * newBooking.quantity);
         expect(data.customerName).toBe(newBooking.customerName);
-        log.info(`TC-B001: Booking ID: ${data.id}, ref: "${data.bookingReference}"`);
+        log.info(`TC-B001: Booking ID: ${data.id}, ref: "${data.bookingRef}"`);
       } finally {
         if (bookingId) await deleteBookingViaApi(request, token, bookingId);
       }
@@ -92,8 +92,8 @@ test.describe('BookingManagement', () => {
       test.setTimeout(60000);
       const loginPage = new LoginPage(page);
       const bookingPage = new BookingPage(page);
-      let bookingId: string | undefined;
-      let token: string;
+      let bookingId: number | undefined;
+      let token: string | undefined;
 
       try {
         // -- Step 1: Login and navigate to event detail page --
@@ -109,12 +109,13 @@ test.describe('BookingManagement', () => {
           customerPhone: newBooking.customerPhone,
         });
 
-        // -- Step 3: Assert confirmation card with booking reference is visible --
+        // -- Step 3: Assert booking reference appears in X-XXXXXX format --
         const bookingRefLocator = bookingPage.getBookingRefLocator();
         await expect(bookingRefLocator).toBeVisible({ timeout: 10000 });
-        const refText = await bookingRefLocator.textContent();
-        expect(refText).toMatch(/^[A-Z]-[A-Z0-9]{6}$/);
-        log.info(`TC-B002: Booking confirmed. Reference: "${refText}"`);
+        const refText = (await bookingRefLocator.textContent())?.trim() ?? '';
+        const refMatch = refText.match(/[A-Z]-[A-Z0-9]{6}/);
+        expect(refMatch).not.toBeNull();
+        log.info(`TC-B002: Booking confirmed. Reference: "${refMatch?.[0]}"`);
 
         // -- Step 4: Capture booking ID for cleanup --
         token = await getAuthToken(request);
@@ -122,7 +123,7 @@ test.describe('BookingManagement', () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         const { data: bookings } = await listRes.json();
-        const created = (bookings as any[]).find(b => b.bookingReference === refText);
+        const created = (bookings as any[]).find(b => b.bookingRef === refMatch?.[0]);
         bookingId = created?.id;
       } finally {
         if (bookingId) {
@@ -195,7 +196,7 @@ test.describe('BookingManagement', () => {
         await page.waitForURL(new RegExp(`${baseUrl}/bookings/?$`), { timeout: 10000 });
         log.info(`TC-B004: Booking ${bookingId} cancelled via UI — redirected to /bookings`);
       } finally {
-        // Cleanup only if booking still exists
+        // Cleanup only if booking still exists (UI cancel may have already removed it)
         const checkRes = await request.get(`${apiUrl}/api/bookings/${bookingId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -259,7 +260,7 @@ test.describe('BookingManagement', () => {
         expect(data.id).toBe(bookingId);
         expect(data.quantity).toBe(newBooking.quantity);
         expect(data.customerName).toBe(newBooking.customerName);
-        log.info(`TC-B101: GET /api/bookings/${bookingId} → ref: "${data.bookingReference}"`);
+        log.info(`TC-B101: GET /api/bookings/${bookingId} → ref: "${data.bookingRef}"`);
       } finally {
         await deleteBookingViaApi(request, token, bookingId);
       }
@@ -279,7 +280,7 @@ test.describe('BookingManagement', () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         const { data: booking } = await detailRes.json();
-        const ref = booking.bookingReference as string;
+        const ref = booking.bookingRef as string;
 
         // -- Step 2: GET booking by reference --
         const response = await request.get(`${apiUrl}/api/bookings/ref/${ref}`, {
@@ -289,7 +290,7 @@ test.describe('BookingManagement', () => {
 
         // -- Step 3: Assert response matches the booking we created --
         const { data } = await response.json();
-        expect(data.bookingReference).toBe(ref);
+        expect(data.bookingRef).toBe(ref);
         expect(data.id).toBe(bookingId);
         log.info(`TC-B102: GET /api/bookings/ref/${ref} → ID: ${data.id}`);
       } finally {
@@ -369,17 +370,12 @@ test.describe('BookingManagement', () => {
       await expect(loginPage.logoutBtn).toBeVisible();
       await bookingPage.gotoBookings(baseUrl);
 
-      // -- Step 3: Click Clear All Bookings --
+      // -- Step 3: Accept native window.confirm dialog then click Clear All Bookings --
+      page.once('dialog', dialog => dialog.accept());
       await expect(bookingPage.clearAllBtn).toBeVisible();
       await bookingPage.clearAllBtn.click();
 
-      // -- Step 4: Confirm if a modal appears --
-      const confirmBtn = page.getByRole('button', { name: /confirm|yes/i });
-      if (await confirmBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await confirmBtn.click();
-      }
-
-      // -- Step 5: Assert empty state is shown --
+      // -- Step 4: Assert empty state is shown after clear --
       await expect(bookingPage.emptyStateText).toBeVisible({ timeout: 10000 });
       log.info(`TC-B105: Clear All clicked — empty state visible on /bookings`);
     }
@@ -446,10 +442,9 @@ test.describe('BookingManagement', () => {
         await bookingPage.checkRefundBtn.click();
 
         // -- Step 4: Wait for spinner to complete and assert non-refundable message --
-        const nonRefundableMsg = page.getByText(
-          new RegExp(`group bookings.*${qty}.*non-refundable`, 'i')
-        );
-        await expect(nonRefundableMsg).toBeVisible({ timeout: 10000 });
+        await expect(
+          page.getByText(new RegExp(`group bookings.*${qty}.*non-refundable`, 'i'))
+        ).toBeVisible({ timeout: 10000 });
         log.info(`TC-B107: Non-refundable message verified for ${qty}-ticket booking`);
       } finally {
         await deleteBookingViaApi(request, token, bookingId);
@@ -462,10 +457,10 @@ test.describe('BookingManagement', () => {
     { tag: '@sanity' },
     async ({ request }) => {
       const token = await getAuthToken(request);
-      let bookingId: string | undefined;
+      let bookingId: number | undefined;
 
       try {
-        // -- Step 1: POST a booking for "Tech Conference Bangalore" --
+        // -- Step 1: POST a booking for the static event --
         const response = await request.post(`${apiUrl}/api/bookings`, {
           headers: { Authorization: `Bearer ${token}` },
           data: newBooking,
@@ -473,7 +468,7 @@ test.describe('BookingManagement', () => {
         expect(response.status()).toBe(201);
         const { data } = await response.json();
         bookingId = data.id;
-        const ref = data.bookingReference as string;
+        const ref = data.bookingRef as string;
 
         // -- Step 2: Assert reference format and leading letter --
         expect(ref).toMatch(/^[A-Z]-[A-Z0-9]{6}$/);
@@ -491,7 +486,7 @@ test.describe('BookingManagement', () => {
     async ({ request }) => {
       const token = await getAuthToken(request);
       const qty = multiTicketBooking.quantity;
-      let bookingId: string | undefined;
+      let bookingId: number | undefined;
 
       try {
         // -- Step 1: POST a booking with quantity > 1 --
