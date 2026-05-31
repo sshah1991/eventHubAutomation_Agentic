@@ -3,7 +3,7 @@ import { LoginPage } from '../../pages/Authentication/LoginPage';
 import { RegisterPage } from '../../pages/Authentication/RegisterPage';
 import testData from '../../fixtures/Authentication/auth.data.json';
 
-const { baseUrl, apiUrl, validUser, invalidUser, newUserRegistration } = testData;
+const { baseUrl, apiUrl, validUser, invalidUser, newUserRegistration, shortPassword, protectedRoutes } = testData;
 
 test.describe('Authentication', () => {
 
@@ -180,6 +180,95 @@ test.describe('Authentication', () => {
       expect(body.user.id).toBeTruthy();
       expect(body.user.email).toBe(uniqueEmail);
       console.log(`Registered ${uniqueEmail} — userId: ${body.user.id}`);
+    }
+  );
+
+  // ── REGRESSION ───────────────────────────────────────────────────────────
+
+  test(
+    'TC-100: Registration rejected when password is below minimum length',
+    { tag: '@regression' },
+    async ({ page }) => {
+      const registerPage = new RegisterPage(page);
+      const uniqueEmail = `${newUserRegistration.emailPrefix}tc100_${Date.now()}${newUserRegistration.emailDomain}`;
+
+      // -- Step 1: Navigate to register and fill with short password --
+      await registerPage.goto(baseUrl);
+      await registerPage.emailInput.fill(uniqueEmail);
+      await registerPage.passwordInput.fill(shortPassword);
+      await registerPage.confirmPasswordInput.fill(shortPassword);
+      await registerPage.registerBtn.click();
+
+      // -- Step 2: Assert form was not submitted (still on register page) --
+      await expect(page).toHaveURL(`${baseUrl}/register`);
+      await expect(registerPage.logoutBtn).not.toBeVisible();
+      console.log(`Confirmed: short password "${shortPassword}" rejected — stayed on /register`);
+    }
+  );
+
+  test(
+    'TC-101: Registration rejected with error when email is already registered',
+    { tag: '@regression' },
+    async ({ page }) => {
+      const registerPage = new RegisterPage(page);
+
+      // -- Step 1: Navigate to register with an already-registered email --
+      await registerPage.goto(baseUrl);
+      await registerPage.register(validUser.email, newUserRegistration.password);
+
+      // -- Step 2: Assert error message shown and no redirect --
+      await expect(registerPage.errorMessage).toBeVisible();
+      await expect(page).toHaveURL(`${baseUrl}/register`);
+      console.log(`Confirmed: duplicate email "${validUser.email}" rejected with error`);
+    }
+  );
+
+  test(
+    'TC-102: Protected API endpoints return 401 when called without a JWT token',
+    { tag: '@regression' },
+    async ({ request }) => {
+      // -- Step 1: Call GET /api/events without Authorization header --
+      const eventsResponse = await request.get(`${apiUrl}/api/events`);
+      expect(eventsResponse.status()).toBe(401);
+
+      // -- Step 2: Call GET /api/bookings without Authorization header --
+      const bookingsResponse = await request.get(`${apiUrl}/api/bookings`);
+      expect(bookingsResponse.status()).toBe(401);
+
+      console.log(`Confirmed: /api/events → ${eventsResponse.status()}, /api/bookings → ${bookingsResponse.status()} (no token)`);
+    }
+  );
+
+  test(
+    'TC-103: Login shows error when correct email is used with wrong password',
+    { tag: '@regression' },
+    async ({ page }) => {
+      const loginPage = new LoginPage(page);
+
+      // -- Step 1: Navigate to login and submit correct email + wrong password --
+      await loginPage.goto(baseUrl);
+      await loginPage.login(validUser.email, invalidUser.password);
+
+      // -- Step 2: Assert error message shown and no redirect --
+      await expect(loginPage.errorMessage).toBeVisible();
+      await expect(page).toHaveURL(`${baseUrl}/login`);
+      await expect(loginPage.logoutBtn).not.toBeVisible();
+      console.log(`Confirmed: correct email + wrong password rejected for "${validUser.email}"`);
+    }
+  );
+
+  test(
+    'TC-200: Accessing protected routes without JWT redirects to login',
+    { tag: '@regression' },
+    async ({ page }) => {
+      // -- Step 1: Attempt each protected route without authentication --
+      for (const route of protectedRoutes) {
+        await page.goto(`${baseUrl}${route}`);
+
+        // -- Step 2: Assert redirect to /login for each protected route --
+        await expect(page).toHaveURL(`${baseUrl}/login`);
+        console.log(`Confirmed: ${route} → redirected to /login`);
+      }
     }
   );
 

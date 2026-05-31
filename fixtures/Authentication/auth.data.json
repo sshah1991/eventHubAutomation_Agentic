@@ -13,5 +13,7 @@
     "emailPrefix": "smoketest_",
     "emailDomain": "@test.com",
     "password": "Smoke@123"
-  }
+  },
+  "shortPassword": "Ab@12",
+  "protectedRoutes": ["/events", "/bookings", "/admin/events"]
 }
