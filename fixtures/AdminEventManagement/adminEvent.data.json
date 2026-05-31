@@ -1,0 +1,29 @@
+{
+  "baseUrl": "https://eventhub.rahulshettyacademy.com",
+  "apiUrl": "https://api.eventhub.rahulshettyacademy.com",
+  "validUser": {
+    "email": "sumeetshah.tsk@gmail.com",
+    "password": "Quinn0x@1"
+  },
+  "newEvent": {
+    "title": "Automation Test Event",
+    "description": "Created by Playwright automation suite",
+    "category": "Conference",
+    "city": "Bangalore",
+    "venue": "Automation Test Venue",
+    "date": "2030-12-31",
+    "eventDate": "2030-12-31T00:00:00.000Z",
+    "price": 999,
+    "totalSeats": 100
+  },
+  "updatedEvent": {
+    "title": "Automation Updated Event",
+    "venue": "Updated Automation Venue",
+    "price": 1499,
+    "totalSeats": 150
+  },
+  "staticEvent": {
+    "id": 1,
+    "title": "Tech Conference Bangalore"
+  }
+}
