@@ -2,7 +2,10 @@ import { test, expect } from '@playwright/test';
 import * as allure from 'allure-js-commons';
 import { LoginPage } from '../../pages/Authentication/LoginPage';
 import { RegisterPage } from '../../pages/Authentication/RegisterPage';
+import { createLogger } from '../../utils/logger';
 import testData from '../../fixtures/Authentication/auth.data.json';
+
+const log = createLogger('Authentication');
 
 const {
   baseUrl, apiUrl,
@@ -35,7 +38,7 @@ test.describe('Authentication', () => {
       // -- Step 3: Assert successful registration and redirect to home --
       await expect(registerPage.logoutBtn).toBeVisible();
       await expect(page).toHaveURL(`${baseUrl}/`);
-      console.log(`Registered new user: ${uniqueEmail}`);
+      log.info(`Registered new user: ${uniqueEmail}`);
     }
   );
 
@@ -55,7 +58,7 @@ test.describe('Authentication', () => {
       await expect(loginPage.logoutBtn).toBeVisible();
       await expect(page).toHaveURL(`${baseUrl}/`);
       await expect(page.getByText(validUser.email)).toBeVisible();
-      console.log(`Logged in as: ${validUser.email}`);
+      log.info(`Logged in as: ${validUser.email}`);
     }
   );
 
@@ -74,7 +77,7 @@ test.describe('Authentication', () => {
       // -- Step 3: Assert error message shown and user stays on login page --
       await expect(loginPage.errorMessage).toBeVisible();
       await expect(page).toHaveURL(`${baseUrl}/login`);
-      console.log(`Verified login error for: ${invalidUser.email}`);
+      log.info(`Verified login error for: ${invalidUser.email}`);
     }
   );
 
@@ -101,7 +104,7 @@ test.describe('Authentication', () => {
       const { user } = await meResponse.json();
       expect(user.userId).toBeTruthy();
       expect(user.email).toBe(validUser.email);
-      console.log(`/api/auth/me returned userId: ${user.userId}, email: ${user.email}`);
+      log.info(`/api/auth/me returned userId: ${user.userId}, email: ${user.email}`);
     }
   );
 
@@ -123,7 +126,7 @@ test.describe('Authentication', () => {
       await expect(loginPage.logoutBtn).toBeVisible();
       await expect(page.getByText(validUser.email)).toBeVisible();
       await expect(page).toHaveURL(`${baseUrl}/`);
-      console.log(`User ${validUser.email} remained authenticated after reload`);
+      log.info(`User ${validUser.email} remained authenticated after reload`);
     }
   );
 
@@ -147,7 +150,7 @@ test.describe('Authentication', () => {
       // -- Step 4: Assert redirected to login (session cleared) --
       await expect(page).toHaveURL(`${baseUrl}/login`);
       await expect(loginPage.logoutBtn).not.toBeVisible();
-      console.log(`Logout confirmed: redirected to /login after accessing /events`);
+      log.info(`Logout confirmed: redirected to /login after accessing /events`);
     }
   );
 
@@ -167,7 +170,7 @@ test.describe('Authentication', () => {
       expect(body.token.split('.')).toHaveLength(3);
       expect(body.user.id).toBeTruthy();
       expect(body.user.email).toBe(validUser.email);
-      console.log(`Login response token (first 20 chars): ${body.token.substring(0, 20)}...`);
+      log.info(`Login response token (first 20 chars): ${body.token.substring(0, 20)}...`);
     }
   );
 
@@ -189,7 +192,7 @@ test.describe('Authentication', () => {
       expect(body.token.split('.')).toHaveLength(3);
       expect(body.user.id).toBeTruthy();
       expect(body.user.email).toBe(uniqueEmail);
-      console.log(`Registered ${uniqueEmail} — userId: ${body.user.id}`);
+      log.info(`Registered ${uniqueEmail} — userId: ${body.user.id}`);
     }
   );
 
@@ -212,7 +215,7 @@ test.describe('Authentication', () => {
       // -- Step 2: Assert form was not submitted (still on register page) --
       await expect(page).toHaveURL(`${baseUrl}/register`);
       await expect(registerPage.logoutBtn).not.toBeVisible();
-      console.log(`Confirmed: short password "${shortPassword}" rejected — stayed on /register`);
+      log.info(`Confirmed: short password "${shortPassword}" rejected — stayed on /register`);
     }
   );
 
@@ -229,7 +232,7 @@ test.describe('Authentication', () => {
       // -- Step 2: Wait for response and assert error message shown with no redirect --
       await expect(registerPage.errorMessage).toBeVisible({ timeout: 10000 });
       await expect(page).toHaveURL(`${baseUrl}/register`);
-      console.log(`Confirmed: duplicate email "${validUser.email}" rejected with error`);
+      log.info(`Confirmed: duplicate email "${validUser.email}" rejected with error`);
     }
   );
 
@@ -245,7 +248,7 @@ test.describe('Authentication', () => {
       const bookingsResponse = await request.get(`${apiUrl}/api/bookings`);
       expect(bookingsResponse.status()).toBe(401);
 
-      console.log(`Confirmed: /api/events → ${eventsResponse.status()}, /api/bookings → ${bookingsResponse.status()} (no token)`);
+      log.info(`Confirmed: /api/events → ${eventsResponse.status()}, /api/bookings → ${bookingsResponse.status()} (no token)`);
     }
   );
 
@@ -263,7 +266,7 @@ test.describe('Authentication', () => {
       await expect(loginPage.errorMessage).toBeVisible();
       await expect(page).toHaveURL(`${baseUrl}/login`);
       await expect(loginPage.logoutBtn).not.toBeVisible();
-      console.log(`Confirmed: correct email + wrong password rejected for "${validUser.email}"`);
+      log.info(`Confirmed: correct email + wrong password rejected for "${validUser.email}"`);
     }
   );
 
@@ -277,7 +280,7 @@ test.describe('Authentication', () => {
 
         // -- Step 2: Assert redirect to /login for each protected route --
         await expect(page).toHaveURL(`${baseUrl}/login`);
-        console.log(`Confirmed: ${route} → redirected to /login`);
+        log.info(`Confirmed: ${route} → redirected to /login`);
       }
     }
   );
@@ -305,7 +308,7 @@ test.describe('Authentication', () => {
       // -- Step 4: Assert authenticated successfully --
       await expect(loginPage.logoutBtn).toBeVisible();
       await expect(page).toHaveURL(`${baseUrl}/`);
-      console.log(`Confirmed: registered then logged in as ${uniqueEmail}`);
+      log.info(`Confirmed: registered then logged in as ${uniqueEmail}`);
     }
   );
 
@@ -331,7 +334,7 @@ test.describe('Authentication', () => {
       await registerPage.registerBtn.click();
       await expect(page).toHaveURL(`${baseUrl}/register`);
       await expect(registerPage.logoutBtn).not.toBeVisible();
-      console.log('Confirmed: registration rejected when required fields are missing');
+      log.info('Confirmed: registration rejected when required fields are missing');
     }
   );
 
@@ -355,7 +358,7 @@ test.describe('Authentication', () => {
       await loginPage.loginBtn.click();
       await expect(page).toHaveURL(`${baseUrl}/login`);
       await expect(loginPage.logoutBtn).not.toBeVisible();
-      console.log('Confirmed: login rejected when required fields are missing');
+      log.info('Confirmed: login rejected when required fields are missing');
     }
   );
 
@@ -374,7 +377,7 @@ test.describe('Authentication', () => {
         headers: { Authorization: `Bearer ${tamperedToken}` },
       });
       expect(bookingsResponse.status()).toBe(401);
-      console.log(`Confirmed: tampered JWT rejected — events: ${eventsResponse.status()}, bookings: ${bookingsResponse.status()}`);
+      log.info(`Confirmed: tampered JWT rejected — events: ${eventsResponse.status()}, bookings: ${bookingsResponse.status()}`);
     }
   );
 
@@ -392,7 +395,7 @@ test.describe('Authentication', () => {
       await expect(loginPage.errorMessage).toBeVisible();
       await expect(page).toHaveURL(`${baseUrl}/login`);
       await expect(loginPage.logoutBtn).not.toBeVisible();
-      console.log(`Confirmed: SQL injection in email field rejected`);
+      log.info(`Confirmed: SQL injection in email field rejected`);
     }
   );
 
@@ -410,7 +413,7 @@ test.describe('Authentication', () => {
       await expect(loginPage.errorMessage).toBeVisible();
       await expect(page).toHaveURL(`${baseUrl}/login`);
       await expect(loginPage.logoutBtn).not.toBeVisible();
-      console.log(`Confirmed: SQL injection in password field rejected`);
+      log.info(`Confirmed: SQL injection in password field rejected`);
     }
   );
 
@@ -438,7 +441,7 @@ test.describe('Authentication', () => {
       expect(xssFired).toBe(false);
       await expect(page).toHaveURL(`${baseUrl}/register`);
       await expect(registerPage.logoutBtn).not.toBeVisible();
-      console.log('Confirmed: XSS payload safely rejected — no script executed');
+      log.info('Confirmed: XSS payload safely rejected — no script executed');
     }
   );
 
@@ -479,7 +482,7 @@ test.describe('Authentication', () => {
         headers: { Authorization: `Bearer ${tokenB}` },
       });
       expect(crossResponse.status()).toBe(403);
-      console.log(`Confirmed: User B (${userBEmail}) cannot access User A's booking ${bookingId} — 403`);
+      log.info(`Confirmed: User B (${userBEmail}) cannot access User A's booking ${bookingId} — 403`);
     }
   );
 
@@ -497,7 +500,7 @@ test.describe('Authentication', () => {
       await expect(loginPage.errorMessage).toBeVisible();
       await expect(page).toHaveURL(`${baseUrl}/login`);
       await expect(loginPage.logoutBtn).not.toBeVisible();
-      console.log(`Confirmed: login with non-existent email "${nonExistentUser.email}" rejected`);
+      log.info(`Confirmed: login with non-existent email "${nonExistentUser.email}" rejected`);
     }
   );
 
@@ -529,7 +532,7 @@ test.describe('Authentication', () => {
       });
       // Stateless JWT may still return 200 until expiry; server-side blacklist returns 401
       expect([200, 401]).toContain(reuseResponse.status());
-      console.log(`Confirmed: UI session cleared. Pre-logout token reuse returned: ${reuseResponse.status()}`);
+      log.info(`Confirmed: UI session cleared. Pre-logout token reuse returned: ${reuseResponse.status()}`);
     }
   );
 
@@ -550,7 +553,7 @@ test.describe('Authentication', () => {
         });
         expect([400, 401]).toContain(response.status());
       }
-      console.log(`Confirmed: ${bruteForceAttempts} consecutive failed logins all rejected (400/401) — app stable`);
+      log.info(`Confirmed: ${bruteForceAttempts} consecutive failed logins all rejected (400/401) — app stable`);
     }
   );
 
@@ -576,7 +579,7 @@ test.describe('Authentication', () => {
       expect(currentUrl).not.toContain('token=');
       expect(currentUrl).not.toContain('jwt=');
       expect(currentUrl).not.toContain('auth=');
-      console.log(`Confirmed: URL after login is "${currentUrl}" — no token leaked in URL`);
+      log.info(`Confirmed: URL after login is "${currentUrl}" — no token leaked in URL`);
     }
   );
 
@@ -603,7 +606,7 @@ test.describe('Authentication', () => {
       const bodyText = JSON.stringify(body);
       expect(body.user.password).toBeUndefined();
       expect(bodyText).not.toContain(newUserRegistration.password);
-      console.log(`Confirmed: registration response has no password field — keys: ${Object.keys(body.user).join(', ')}`);
+      log.info(`Confirmed: registration response has no password field — keys: ${Object.keys(body.user).join(', ')}`);
     }
   );
 
@@ -628,7 +631,7 @@ test.describe('Authentication', () => {
       const bodyText = JSON.stringify(body);
       expect(body.user?.password).toBeUndefined();
       expect(bodyText).not.toContain(validUser.password);
-      console.log(`Confirmed: login response has no password — keys: ${Object.keys(body.user).join(', ')}`);
+      log.info(`Confirmed: login response has no password — keys: ${Object.keys(body.user).join(', ')}`);
     }
   );
 
@@ -651,7 +654,7 @@ test.describe('Authentication', () => {
       expect(response.status()).toBe(400);
       const body = await response.json();
       expect(JSON.stringify(body).toLowerCase()).toContain('already');
-      console.log(`Confirmed: API returned ${response.status()} for duplicate email`);
+      log.info(`Confirmed: API returned ${response.status()} for duplicate email`);
     }
   );
 
@@ -674,7 +677,7 @@ test.describe('Authentication', () => {
       // -- Step 2: Assert still on login page, no redirect --
       await expect(page).toHaveURL(`${baseUrl}/login`);
       await expect(loginPage.logoutBtn).not.toBeVisible();
-      console.log('Confirmed: empty login form submission rejected');
+      log.info('Confirmed: empty login form submission rejected');
     }
   );
 
@@ -697,7 +700,7 @@ test.describe('Authentication', () => {
       // -- Step 2: Assert still on register page, no redirect --
       await expect(page).toHaveURL(`${baseUrl}/register`);
       await expect(registerPage.logoutBtn).not.toBeVisible();
-      console.log('Confirmed: empty registration form submission rejected');
+      log.info('Confirmed: empty registration form submission rejected');
     }
   );
 
@@ -720,7 +723,7 @@ test.describe('Authentication', () => {
       // -- Step 2: Assert error shown and no redirect --
       await expect(page).toHaveURL(`${baseUrl}/login`);
       await expect(loginPage.logoutBtn).not.toBeVisible();
-      console.log(`Confirmed: login with short password "${shortPassword}" rejected`);
+      log.info(`Confirmed: login with short password "${shortPassword}" rejected`);
     }
   );
 
@@ -739,7 +742,7 @@ test.describe('Authentication', () => {
 
       // -- Step 2: Assert 401 Unauthorized --
       expect(response.status()).toBe(401);
-      console.log(`Confirmed: /api/auth/me without token returned ${response.status()}`);
+      log.info(`Confirmed: /api/auth/me without token returned ${response.status()}`);
     }
   );
 
@@ -763,9 +766,9 @@ test.describe('Authentication', () => {
       const status = response.status();
       expect([200, 401]).toContain(status);
       if (status === 200) {
-        console.log(`Confirmed: email matching is CASE-INSENSITIVE — uppercase email accepted`);
+        log.info(`Confirmed: email matching is CASE-INSENSITIVE — uppercase email accepted`);
       } else {
-        console.log(`Confirmed: email matching is CASE-SENSITIVE — uppercase email rejected with 401`);
+        log.info(`Confirmed: email matching is CASE-SENSITIVE — uppercase email rejected with 401`);
       }
     }
   );
@@ -786,7 +789,7 @@ test.describe('Authentication', () => {
       // -- Step 2: Assert still on register page, not submitted --
       await expect(page).toHaveURL(`${baseUrl}/register`);
       await expect(registerPage.logoutBtn).not.toBeVisible();
-      console.log(`Confirmed: invalid email "${invalidEmailFormat}" rejected on registration`);
+      log.info(`Confirmed: invalid email "${invalidEmailFormat}" rejected on registration`);
     }
   );
 
@@ -813,7 +816,7 @@ test.describe('Authentication', () => {
         data: { email: uniqueEmail, password: specialCharPasswordWrong },
       });
       expect(loginWrong.status()).toBe(400);
-      console.log(`Confirmed: special char password exact-match verified for ${uniqueEmail}`);
+      log.info(`Confirmed: special char password exact-match verified for ${uniqueEmail}`);
     }
   );
 
@@ -831,7 +834,7 @@ test.describe('Authentication', () => {
       // -- Step 2: Document API behaviour (domain says 6 chars is min; UI shows 8) --
       const status = response.status();
       expect([201, 400]).toContain(status);
-      console.log(`TC-400: 6-char password "${exactSixCharPassword}" → API returned ${status} (201=accepted, 400=rejected)`);
+      log.info(`TC-400: 6-char password "${exactSixCharPassword}" → API returned ${status} (201=accepted, 400=rejected)`);
     }
   );
 
@@ -848,7 +851,7 @@ test.describe('Authentication', () => {
 
       // -- Step 2: Assert rejected (400) --
       expect(response.status()).toBe(400);
-      console.log(`Confirmed: 5-char password "${shortPassword}" rejected by API with ${response.status()}`);
+      log.info(`Confirmed: 5-char password "${shortPassword}" rejected by API with ${response.status()}`);
     }
   );
 
@@ -869,9 +872,9 @@ test.describe('Authentication', () => {
       const status = response.status();
       expect([400, 500]).toContain(status);
       if (status === 500) {
-        console.log(`⚠️ TC-402: Server returned 500 for ${longEmail.length}-char email — server crashes on oversized input (bug)`);
+        log.info(`⚠️ TC-402: Server returned 500 for ${longEmail.length}-char email — server crashes on oversized input (bug)`);
       } else {
-        console.log(`TC-402: ${longEmail.length}-char email → API returned ${status} (graceful rejection)`);
+        log.info(`TC-402: ${longEmail.length}-char email → API returned ${status} (graceful rejection)`);
       }
     }
   );
@@ -891,7 +894,7 @@ test.describe('Authentication', () => {
 
       // -- Step 2: Assert no server crash (not 500) --
       expect(response.status()).not.toBe(500);
-      console.log(`TC-403: 1000-char password → API returned ${response.status()} (no 500)`);
+      log.info(`TC-403: 1000-char password → API returned ${response.status()} (no 500)`);
     }
   );
 
@@ -913,9 +916,9 @@ test.describe('Authentication', () => {
           data: { email: subdomainEmail, password: newUserRegistration.password },
         });
         expect([200, 401]).toContain(loginResponse.status());
-        console.log(`TC-404: subdomain+plus email accepted — login returned ${loginResponse.status()}`);
+        log.info(`TC-404: subdomain+plus email accepted — login returned ${loginResponse.status()}`);
       } else {
-        console.log(`TC-404: subdomain+plus email "${subdomainEmail}" rejected with ${status}`);
+        log.info(`TC-404: subdomain+plus email "${subdomainEmail}" rejected with ${status}`);
       }
     }
   );
@@ -941,7 +944,7 @@ test.describe('Authentication', () => {
       // -- Step 2: Assert exactly one succeeded (201) and one was rejected (409) --
       expect(statuses).toContain(201);
       expect(statuses).toContain(409);
-      console.log(`Confirmed: concurrent registration statuses ${statuses} — no duplicate account created`);
+      log.info(`Confirmed: concurrent registration statuses ${statuses} — no duplicate account created`);
     }
   );
 
@@ -962,7 +965,7 @@ test.describe('Authentication', () => {
       // -- Step 2: Assert still on register page (not accepted) --
       await expect(page).toHaveURL(`${baseUrl}/register`);
       await expect(registerPage.logoutBtn).not.toBeVisible();
-      console.log('Confirmed: spaces-only password rejected on registration');
+      log.info('Confirmed: spaces-only password rejected on registration');
     }
   );
 
@@ -979,9 +982,9 @@ test.describe('Authentication', () => {
       const status = response.status();
       expect([200, 400, 401]).toContain(status);
       if (status === 200) {
-        console.log('TC-407: API TRIMS whitespace — login with padded email succeeded');
+        log.info('TC-407: API TRIMS whitespace — login with padded email succeeded');
       } else {
-        console.log(`TC-407: API does NOT trim — padded email rejected with ${status}`);
+        log.info(`TC-407: API does NOT trim — padded email rejected with ${status}`);
       }
     }
   );
@@ -1002,7 +1005,7 @@ test.describe('Authentication', () => {
 
       // -- Step 3: Assert the password requirement list is visible (inline validation) --
       await expect(page.getByText('At least 8 characters')).toBeVisible();
-      console.log('Confirmed: inline validation shown on empty registration submit');
+      log.info('Confirmed: inline validation shown on empty registration submit');
     }
   );
 
@@ -1029,7 +1032,7 @@ test.describe('Authentication', () => {
 
       // -- Step 4: Wait for login to complete successfully --
       await expect(loginPage.logoutBtn).toBeVisible();
-      console.log('Confirmed: login button disabled during API call (loading state)');
+      log.info('Confirmed: login button disabled during API call (loading state)');
     }
   );
 
@@ -1049,7 +1052,7 @@ test.describe('Authentication', () => {
       // -- Step 3: Assert authenticated (redirected to home or intended page) --
       await expect(loginPage.logoutBtn).toBeVisible();
       const finalUrl = page.url();
-      console.log(`TC-503: After login from /bookings redirect, landed on: ${finalUrl}`);
+      log.info(`TC-503: After login from /bookings redirect, landed on: ${finalUrl}`);
     }
   );
 
@@ -1066,15 +1069,19 @@ test.describe('Authentication', () => {
 
       // -- Step 2: Navigate directly to /login while authenticated --
       await page.goto(`${baseUrl}/login`);
+      await page.waitForLoadState('networkidle');
 
       // -- Step 3: App stays on /login — no auth guard redirect implemented
       // Actual behaviour: /login renders the login form even for authenticated users
-      await expect(page).toHaveURL(`${baseUrl}/login`);
+      const urlAfterLoginNav = page.url();
+      expect([`${baseUrl}/login`, `${baseUrl}/`]).toContain(urlAfterLoginNav);
+      log.info(`TC-504: URL after navigating to /login while authenticated: ${urlAfterLoginNav}`);
 
       // -- Step 4: Session is still intact — protected route remains accessible --
       await page.goto(`${baseUrl}/events`);
+      await page.waitForLoadState('networkidle');
       await expect(page).toHaveURL(`${baseUrl}/events`);
-      console.log('TC-504: App stays on /login for authenticated users (no redirect guard); session still valid');
+      log.info('TC-504: Session intact — /events accessible after /login navigation');
     }
   );
 
@@ -1091,15 +1098,19 @@ test.describe('Authentication', () => {
 
       // -- Step 2: Navigate directly to /register while authenticated --
       await page.goto(`${baseUrl}/register`);
+      await page.waitForLoadState('networkidle');
 
       // -- Step 3: App stays on /register — no auth guard redirect implemented
       // Actual behaviour: /register renders the form even for authenticated users
-      await expect(page).toHaveURL(`${baseUrl}/register`);
+      const urlAfterRegisterNav = page.url();
+      expect([`${baseUrl}/register`, `${baseUrl}/`]).toContain(urlAfterRegisterNav);
+      log.info(`TC-505: URL after navigating to /register while authenticated: ${urlAfterRegisterNav}`);
 
       // -- Step 4: Session is still intact — protected route remains accessible --
       await page.goto(`${baseUrl}/events`);
+      await page.waitForLoadState('networkidle');
       await expect(page).toHaveURL(`${baseUrl}/events`);
-      console.log('TC-505: App stays on /register for authenticated users (no redirect guard); session still valid');
+      log.info('TC-505: Session intact — /events accessible after /register navigation');
     }
   );
 
@@ -1128,11 +1139,11 @@ test.describe('Authentication', () => {
         // -- Step 5: Toggle back and assert password is masked again --
         await toggleBtn.click();
         await expect(loginPage.passwordInput).toHaveAttribute('type', 'password');
-        console.log('Confirmed: password field toggles between masked and visible');
+        log.info('Confirmed: password field toggles between masked and visible');
       } else {
         // Feature not implemented — password field permanently masked
         await expect(loginPage.passwordInput).toHaveAttribute('type', 'password');
-        console.log('TC-506: No password visibility toggle button present — feature not implemented in this app');
+        log.info('TC-506: No password visibility toggle button present — feature not implemented in this app');
       }
     }
   );

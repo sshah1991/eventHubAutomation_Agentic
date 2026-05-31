@@ -1,4 +1,7 @@
 import { Page, Locator } from '@playwright/test';
+import { createLogger } from '../../utils/logger';
+
+const log = createLogger('LoginPage');
 
 export class LoginPage {
   readonly page: Page;
@@ -18,10 +21,12 @@ export class LoginPage {
   }
 
   async goto(baseUrl: string): Promise<void> {
+    log.info(`Navigating to ${baseUrl}/login`);
     await this.page.goto(`${baseUrl}/login`);
   }
 
   async login(email: string, password: string): Promise<void> {
+    log.info(`Submitting login form for: ${email}`);
     await this.emailInput.fill(email);
     await this.passwordInput.fill(password);
     await this.loginBtn.click();
