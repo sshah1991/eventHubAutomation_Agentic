@@ -24,5 +24,14 @@
     "customerName": "Group Tester",
     "customerEmail": "sumeetshah.tsk@gmail.com",
     "customerPhone": "+91 98765 43211"
+  },
+  "dynamicEventTemplate": {
+    "description": "Booking regression test event",
+    "category": "Conference",
+    "city": "Bangalore",
+    "venue": "Automation Test Venue",
+    "date": "2030-12-31",
+    "price": 500,
+    "totalSeats": 10
   }
 }

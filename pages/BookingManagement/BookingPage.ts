@@ -32,6 +32,9 @@ export class BookingPage {
   readonly clearAllBtn: Locator;
   readonly emptyStateText: Locator;
 
+  // /bookings list page — sandbox warning banner (appears near the 9-booking limit)
+  readonly sandboxWarningBanner: Locator;
+
   // /bookings/:id detail page
   readonly cancelBookingBtn: Locator;
   readonly checkRefundBtn: Locator;
@@ -59,6 +62,9 @@ export class BookingPage {
     this.clearAllBtn = page.getByRole('button', { name: /clear all bookings/i });
     this.emptyStateText = page.getByText(/no bookings yet/i);
 
+    // Bookings list — sandbox warning banner
+    this.sandboxWarningBanner = page.getByText(/sandbox holds up to/i);
+
     // Booking detail (/bookings/:id)
     this.cancelBookingBtn = page.getByRole('button', { name: /cancel booking/i });
     this.checkRefundBtn = page.getByRole('button', { name: /check eligibility/i });
@@ -75,7 +81,7 @@ export class BookingPage {
     await this.page.goto(`${baseUrl}/bookings`);
   }
 
-  async gotoBookingDetail(baseUrl: string, bookingId: string): Promise<void> {
+  async gotoBookingDetail(baseUrl: string, bookingId: number | string): Promise<void> {
     log.info(`Navigating to ${baseUrl}/bookings/${bookingId}`);
     await this.page.goto(`${baseUrl}/bookings/${bookingId}`);
   }
