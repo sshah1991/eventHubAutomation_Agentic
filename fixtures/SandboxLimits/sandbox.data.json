@@ -22,5 +22,10 @@
     "customerName": "SL Tester",
     "customerEmail": "sumeetshah.tsk@gmail.com",
     "customerPhone": "+91 98765 43210"
+  },
+  "userBTemplate": {
+    "emailPrefix": "sl_userb_",
+    "emailDomain": "@test.com",
+    "password": "SandboxTest@123"
   }
 }

@@ -353,4 +353,176 @@ test.describe('CrossUserSecurity', () => {
     }
   );
 
+  // ── REGRESSION ─────────────────────────────────────────────────────────────
+
+  test(
+    "TC-CUS201: GET /api/events list by User B does not include User A's dynamic events",
+    { tag: '@regression' },
+    async ({ request }) => {
+      const tokenA = await getAuthToken(request, userA.email, userA.password);
+      const userBEmail = `${userBTemplate.emailPrefix}${Date.now()}${userBTemplate.emailDomain}`;
+      const tokenB = await registerUser(request, userBEmail, userBTemplate.password);
+      const uniqueTitle = `CUS201-${Date.now()}`;
+      let eventId: number | undefined;
+
+      try {
+        // -- Step 1: User A creates a dynamic event --
+        eventId = await createEventViaApi(request, tokenA, uniqueTitle);
+        log.info(`TC-CUS201: User A created event "${uniqueTitle}" (ID: ${eventId})`);
+
+        // -- Step 2: User B fetches the events list --
+        const response = await request.get(`${apiUrl}/api/events`, {
+          headers: { Authorization: `Bearer ${tokenB}` },
+        });
+        expect(response.status()).toBe(200);
+
+        // -- Step 3: Assert User A's dynamic event title is NOT in User B's list --
+        const { data: events } = await response.json();
+        const titles = (events as any[]).map(e => e.title as string);
+        expect(titles).not.toContain(uniqueTitle);
+        log.info(`TC-CUS201: User B's event list does not contain "${uniqueTitle}" ✓`);
+      } finally {
+        if (eventId) await deleteEventViaApi(request, tokenA, eventId);
+      }
+    }
+  );
+
+  test(
+    "TC-CUS202: User B token returns 403 on GET /api/events/:id for User A's dynamic event",
+    { tag: '@regression' },
+    async ({ request }) => {
+      const tokenA = await getAuthToken(request, userA.email, userA.password);
+      const userBEmail = `${userBTemplate.emailPrefix}${Date.now()}${userBTemplate.emailDomain}`;
+      const tokenB = await registerUser(request, userBEmail, userBTemplate.password);
+      let eventId: number | undefined;
+
+      try {
+        // -- Step 1: User A creates a dynamic event --
+        eventId = await createEventViaApi(request, tokenA, `CUS202-${Date.now()}`);
+        log.info(`TC-CUS202: User A created event ID ${eventId}`);
+
+        // -- Step 2: User B attempts to GET User A's event by ID --
+        const response = await request.get(`${apiUrl}/api/events/${eventId}`, {
+          headers: { Authorization: `Bearer ${tokenB}` },
+        });
+
+        // -- Step 3: Assert 403 Forbidden --
+        expect(response.status()).toBe(403);
+        log.info(`TC-CUS202: User B GET /api/events/${eventId} → ${response.status()} ✓`);
+      } finally {
+        if (eventId) await deleteEventViaApi(request, tokenA, eventId);
+      }
+    }
+  );
+
+  test(
+    "TC-CUS203: DELETE /api/bookings (clear all) by User B does not delete User A's bookings",
+    { tag: '@regression' },
+    async ({ request }) => {
+      const tokenA = await getAuthToken(request, userA.email, userA.password);
+      const userBEmail = `${userBTemplate.emailPrefix}${Date.now()}${userBTemplate.emailDomain}`;
+      const tokenB = await registerUser(request, userBEmail, userBTemplate.password);
+      let eventIdA: number | undefined;
+      let bookingIdA: number | undefined;
+
+      try {
+        // -- Step 1: User A creates an event and a booking --
+        eventIdA = await createEventViaApi(request, tokenA, `CUS203-${Date.now()}`);
+        ({ id: bookingIdA } = await createBookingViaApi(request, tokenA, eventIdA, userA.email));
+        log.info(`TC-CUS203: User A booking ID ${bookingIdA} created`);
+
+        // -- Step 2: User B clears all their own bookings --
+        const clearRes = await request.delete(`${apiUrl}/api/bookings`, {
+          headers: { Authorization: `Bearer ${tokenB}` },
+        });
+        expect([200, 204]).toContain(clearRes.status());
+
+        // -- Step 3: Verify User A's booking still exists (untouched) --
+        const verifyRes = await request.get(`${apiUrl}/api/bookings/${bookingIdA}`, {
+          headers: { Authorization: `Bearer ${tokenA}` },
+        });
+        expect(verifyRes.status()).toBe(200);
+        log.info(`TC-CUS203: User A's booking ${bookingIdA} survived User B's clear-all ✓`);
+      } finally {
+        if (bookingIdA) await deleteBookingViaApi(request, tokenA, bookingIdA);
+        if (eventIdA) await deleteEventViaApi(request, tokenA, eventIdA);
+      }
+    }
+  );
+
+  test(
+    "TC-CUS204: User B's /bookings page in UI does not show User A's booking card",
+    { tag: '@regression' },
+    async ({ page, request }) => {
+      test.setTimeout(60000);
+      const loginPage = new LoginPage(page);
+      const tokenA = await getAuthToken(request, userA.email, userA.password);
+      const userBEmail = `${userBTemplate.emailPrefix}${Date.now()}${userBTemplate.emailDomain}`;
+      await registerUser(request, userBEmail, userBTemplate.password);
+      let eventId: number | undefined;
+      let bookingId: number | undefined;
+      let bookingRef: string | undefined;
+
+      try {
+        // -- Step 1: User A creates an event and a booking, capturing the ref --
+        eventId = await createEventViaApi(request, tokenA, `CUS204-${Date.now()}`);
+        ({ id: bookingId, bookingRef } = await createBookingViaApi(
+          request, tokenA, eventId, userA.email
+        ));
+        log.info(`TC-CUS204: User A booking ref "${bookingRef}" (ID ${bookingId})`);
+
+        // -- Step 2: User B logs in via UI --
+        await loginPage.goto(baseUrl);
+        await loginPage.login(userBEmail, userBTemplate.password);
+        await expect(loginPage.logoutBtn).toBeVisible();
+
+        // -- Step 3: User B navigates to /bookings --
+        await page.goto(`${baseUrl}/bookings`);
+        await page.waitForLoadState('networkidle');
+
+        // -- Step 4: Assert User A's booking reference is NOT visible on User B's page --
+        await expect(page.getByText(bookingRef!)).not.toBeVisible();
+        log.info(`TC-CUS204: User A's booking ref "${bookingRef}" absent from User B's /bookings ✓`);
+      } finally {
+        if (bookingId) await deleteBookingViaApi(request, tokenA, bookingId);
+        if (eventId) await deleteEventViaApi(request, tokenA, eventId);
+      }
+    }
+  );
+
+  test(
+    "TC-CUS205: User B's /admin/events page in UI does not show User A's event",
+    { tag: '@regression' },
+    async ({ page, request }) => {
+      test.setTimeout(60000);
+      const loginPage = new LoginPage(page);
+      const tokenA = await getAuthToken(request, userA.email, userA.password);
+      const userBEmail = `${userBTemplate.emailPrefix}${Date.now()}${userBTemplate.emailDomain}`;
+      await registerUser(request, userBEmail, userBTemplate.password);
+      const uniqueTitle = `CUS205-${Date.now()}`;
+      let eventId: number | undefined;
+
+      try {
+        // -- Step 1: User A creates a dynamic event --
+        eventId = await createEventViaApi(request, tokenA, uniqueTitle);
+        log.info(`TC-CUS205: User A created event "${uniqueTitle}" (ID: ${eventId})`);
+
+        // -- Step 2: User B logs in via UI --
+        await loginPage.goto(baseUrl);
+        await loginPage.login(userBEmail, userBTemplate.password);
+        await expect(loginPage.logoutBtn).toBeVisible();
+
+        // -- Step 3: User B navigates to /admin/events --
+        await page.goto(`${baseUrl}/admin/events`);
+        await page.waitForLoadState('networkidle');
+
+        // -- Step 4: Assert User A's event title is NOT visible on User B's admin page --
+        await expect(page.getByText(uniqueTitle)).not.toBeVisible();
+        log.info(`TC-CUS205: User A's event "${uniqueTitle}" absent from User B's /admin/events ✓`);
+      } finally {
+        if (eventId) await deleteEventViaApi(request, tokenA, eventId);
+      }
+    }
+  );
+
 });

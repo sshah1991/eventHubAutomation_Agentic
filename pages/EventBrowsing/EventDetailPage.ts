@@ -9,6 +9,7 @@ export class EventDetailPage {
   readonly qtyIncreaseBtn: Locator;
   readonly qtyDecreaseBtn: Locator;
   readonly logoutBtn: Locator;
+  readonly availableSeatsText: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -16,6 +17,7 @@ export class EventDetailPage {
     this.qtyIncreaseBtn = page.getByRole('button', { name: '+' });
     this.qtyDecreaseBtn = page.getByRole('button', { name: '-' });
     this.logoutBtn = page.getByRole('button', { name: 'Logout' });
+    this.availableSeatsText = page.getByText(/available seats/i);
   }
 
   async goto(baseUrl: string, eventId: number): Promise<void> {

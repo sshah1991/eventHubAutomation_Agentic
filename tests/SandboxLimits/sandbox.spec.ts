@@ -14,6 +14,7 @@ const {
   sandboxBookingLimit,
   testEventTemplate,
   testBookingTemplate,
+  userBTemplate,
 } = testData;
 
 // ── API helpers ────────────────────────────────────────────────────────────
@@ -53,6 +54,31 @@ async function clearAllBookings(request: APIRequestContext, token: string): Prom
   await request.delete(`${apiUrl}/api/bookings`, {
     headers: { Authorization: `Bearer ${token}` },
   });
+}
+
+async function createBookingViaApi(
+  request: APIRequestContext,
+  token: string,
+  eventId: number
+): Promise<number> {
+  const res = await request.post(`${apiUrl}/api/bookings`, {
+    headers: { Authorization: `Bearer ${token}` },
+    data: { ...testBookingTemplate, eventId },
+  });
+  const { data } = await res.json();
+  return data.id as number;
+}
+
+async function registerUser(
+  request: APIRequestContext,
+  email: string,
+  password: string
+): Promise<string> {
+  const res = await request.post(`${apiUrl}/api/auth/register`, {
+    data: { email, password },
+  });
+  const { token } = await res.json();
+  return token;
 }
 
 // Deletes all user-created (dynamic) events. Static events return 403 and are skipped.
@@ -334,6 +360,195 @@ test.describe('SandboxLimits', () => {
       } finally {
         if (createdId) await deleteEventViaApi(request, token, createdId);
         log.info('TC-SL105: Cleanup done');
+      }
+    }
+  );
+
+  // ── REGRESSION ─────────────────────────────────────────────────────────────
+
+  test(
+    `TC-SL201: /bookings page shows sandbox warning banner when approaching the ${sandboxBookingLimit}-booking limit`,
+    { tag: '@regression' },
+    async ({ page, request }) => {
+      test.setTimeout(90000);
+      const loginPage = new LoginPage(page);
+      const sandboxPage = new SandboxPage(page);
+      const token = await getAuthToken(request);
+
+      // -- Step 1: Create a dedicated event and clear all bookings as baseline --
+      const eventId = await createEventViaApi(request, token, `SL201-${Date.now()}`);
+      await clearAllBookings(request, token);
+
+      // -- Step 2: Create 8 bookings (near the 9-booking limit) --
+      for (let i = 0; i < 8; i++) {
+        await createBookingViaApi(request, token, eventId);
+      }
+      log.info(`TC-SL201: Created 8 bookings against event ${eventId}`);
+
+      try {
+        // -- Step 3: Login and navigate to /bookings --
+        await loginPage.goto(baseUrl);
+        await loginPage.login(validUser.email, validUser.password);
+        await expect(loginPage.logoutBtn).toBeVisible();
+        await sandboxPage.gotoBookings(baseUrl);
+
+        // -- Step 4: Assert sandbox warning banner is visible --
+        await expect(sandboxPage.bookingsBanner).toBeVisible({ timeout: 10000 });
+        log.info(`TC-SL201: Sandbox banner visible on /bookings at 8/${sandboxBookingLimit} bookings ✓`);
+      } finally {
+        await clearAllBookings(request, token);
+        await deleteEventViaApi(request, token, eventId);
+      }
+    }
+  );
+
+  test(
+    'TC-SL202: /bookings page does NOT show sandbox warning banner when booking count is low',
+    { tag: '@regression' },
+    async ({ page, request }) => {
+      test.setTimeout(60000);
+      const loginPage = new LoginPage(page);
+      const sandboxPage = new SandboxPage(page);
+      const token = await getAuthToken(request);
+
+      // -- Step 1: Clear all bookings so user starts with 0 --
+      await clearAllBookings(request, token);
+      log.info('TC-SL202: All bookings cleared — starting from 0');
+
+      try {
+        // -- Step 2: Login and navigate to /bookings --
+        await loginPage.goto(baseUrl);
+        await loginPage.login(validUser.email, validUser.password);
+        await expect(loginPage.logoutBtn).toBeVisible();
+        await sandboxPage.gotoBookings(baseUrl);
+        await page.waitForLoadState('networkidle');
+
+        // -- Step 3: Assert sandbox warning banner is NOT visible at low count --
+        await expect(sandboxPage.bookingsBanner).not.toBeVisible();
+        log.info('TC-SL202: No sandbox banner shown on /bookings with 0 bookings ✓');
+      } finally {
+        await clearAllBookings(request, token);
+      }
+    }
+  );
+
+  test(
+    `TC-SL203: Creating the ${sandboxBookingLimit + 1}th booking triggers FIFO — oldest auto-pruned`,
+    { tag: '@regression' },
+    async ({ request }) => {
+      test.setTimeout(120000);
+      const token = await getAuthToken(request);
+
+      // -- Step 1: Create a dedicated event and clear existing bookings --
+      const eventId = await createEventViaApi(request, token, `SL203-${Date.now()}`);
+      await clearAllBookings(request, token);
+
+      const ids: number[] = [];
+      try {
+        // -- Step 2: Fill to exactly the booking limit (9 bookings) --
+        for (let i = 0; i < sandboxBookingLimit; i++) {
+          const id = await createBookingViaApi(request, token, eventId);
+          ids.push(id);
+        }
+        log.info(`TC-SL203: Created ${sandboxBookingLimit} bookings — oldest ID ${ids[0]}`);
+
+        // -- Step 3: Create the (limit+1)th booking — triggers FIFO pruning --
+        await createBookingViaApi(request, token, eventId);
+
+        // -- Step 4: Assert list count is still at the limit --
+        const listRes = await request.get(`${apiUrl}/api/bookings`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const { data: bookings } = await listRes.json();
+        expect((bookings as any[]).length).toBeLessThanOrEqual(sandboxBookingLimit);
+
+        // -- Step 5: Assert the oldest booking is gone (pruned by FIFO) --
+        const oldestRes = await request.get(`${apiUrl}/api/bookings/${ids[0]}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        expect(oldestRes.status()).toBe(404);
+        log.info(
+          `TC-SL203: Oldest booking ${ids[0]} auto-pruned after ${sandboxBookingLimit + 1}th creation ✓`
+        );
+      } finally {
+        await clearAllBookings(request, token);
+        await deleteEventViaApi(request, token, eventId);
+      }
+    }
+  );
+
+  test(
+    `TC-SL204: User A at the ${sandboxBookingLimit}-booking limit does not affect User B's booking capacity`,
+    { tag: '@regression' },
+    async ({ request }) => {
+      test.setTimeout(120000);
+      const tokenA = await getAuthToken(request);
+      const userBEmail = `${userBTemplate.emailPrefix}${Date.now()}${userBTemplate.emailDomain}`;
+      const tokenB = await registerUser(request, userBEmail, userBTemplate.password);
+
+      // -- Step 1: Create a dedicated event and bring User A to the booking limit --
+      const eventId = await createEventViaApi(request, tokenA, `SL204-${Date.now()}`);
+      await clearAllBookings(request, tokenA);
+      for (let i = 0; i < sandboxBookingLimit; i++) {
+        await createBookingViaApi(request, tokenA, eventId);
+      }
+      log.info(`TC-SL204: User A is at ${sandboxBookingLimit}-booking limit`);
+
+      try {
+        // -- Step 2: User B (fresh account) creates a booking — should succeed independently --
+        const res = await request.post(`${apiUrl}/api/bookings`, {
+          headers: { Authorization: `Bearer ${tokenB}` },
+          data: { ...testBookingTemplate, eventId },
+        });
+        expect(res.status()).toBe(201);
+        const { data: bookingB } = await res.json();
+        log.info(`TC-SL204: User B created booking ID ${bookingB.id} — unaffected by User A's limit ✓`);
+      } finally {
+        await clearAllBookings(request, tokenA);
+        await deleteEventViaApi(request, tokenA, eventId);
+      }
+    }
+  );
+
+  test(
+    `TC-SL205: User A at the ${sandboxEventLimit}-event limit does not affect User B's event creation`,
+    { tag: '@regression' },
+    async ({ request }) => {
+      test.setTimeout(120000);
+      const tokenA = await getAuthToken(request);
+      const userBEmail = `${userBTemplate.emailPrefix}${Date.now()}${userBTemplate.emailDomain}`;
+      const tokenB = await registerUser(request, userBEmail, userBTemplate.password);
+      const prefix = `SL205-${Date.now()}`;
+      const createdIdsA: number[] = [];
+      let createdIdB: number | undefined;
+
+      try {
+        // -- Step 1: Clear User A's events and fill to the 6-event limit --
+        await clearDynamicEvents(request, tokenA);
+        for (let i = 1; i <= sandboxEventLimit; i++) {
+          const id = await createEventViaApi(request, tokenA, `${prefix}-A-${i}`);
+          createdIdsA.push(id);
+        }
+        log.info(`TC-SL205: User A at ${sandboxEventLimit}-event limit`);
+
+        // -- Step 2: User B (fresh account) creates an event — should succeed independently --
+        const res = await request.post(`${apiUrl}/api/events`, {
+          headers: { Authorization: `Bearer ${tokenB}` },
+          data: { ...testEventTemplate, title: `${prefix}-B-1` },
+        });
+        expect(res.status()).toBe(201);
+        const { data: eventB } = await res.json();
+        createdIdB = eventB.id as number;
+        log.info(`TC-SL205: User B created event ID ${createdIdB} — unaffected by User A's limit ✓`);
+      } finally {
+        for (const id of createdIdsA) {
+          await deleteEventViaApi(request, tokenA, id);
+        }
+        if (createdIdB) {
+          await request.delete(`${apiUrl}/api/events/${createdIdB}`, {
+            headers: { Authorization: `Bearer ${tokenB}` },
+          });
+        }
       }
     }
   );

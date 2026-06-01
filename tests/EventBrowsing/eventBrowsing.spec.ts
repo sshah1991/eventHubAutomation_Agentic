@@ -344,6 +344,226 @@ test.describe('EventBrowsing', () => {
     }
   );
 
+  // ── REGRESSION ─────────────────────────────────────────────────────────────
+
+  // ─── Auth Guards ──────────────────────────────────────────────────────────
+
+  test(
+    'TC-EB-R201: GET /api/events without auth token returns 401',
+    { tag: '@regression' },
+    async ({ request }) => {
+      const response = await request.get(`${apiUrl}/api/events`);
+      expect(response.status()).toBe(401);
+      log.info(`TC-EB-R201: GET /api/events without auth → ${response.status()} ✓`);
+    }
+  );
+
+  test(
+    'TC-EB-R202: GET /api/events/:id without auth token returns 401',
+    { tag: '@regression' },
+    async ({ request }) => {
+      const response = await request.get(`${apiUrl}/api/events/${knownEvent.id}`);
+      expect(response.status()).toBe(401);
+      log.info(`TC-EB-R202: GET /api/events/${knownEvent.id} without auth → ${response.status()} ✓`);
+    }
+  );
+
+  test(
+    'TC-EB-R203: GET /api/events/:id for non-existent ID returns 404',
+    { tag: '@regression' },
+    async ({ request }) => {
+      const token = await getAuthToken(request);
+      const response = await request.get(`${apiUrl}/api/events/99999999`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      expect(response.status()).toBe(404);
+      log.info(`TC-EB-R203: GET /api/events/99999999 → ${response.status()} ✓`);
+    }
+  );
+
+  test(
+    'TC-EB-R204: GET /api/events respects page and limit pagination params',
+    { tag: '@regression' },
+    async ({ request }) => {
+      const token = await getAuthToken(request);
+
+      // -- Step 1: GET page 1 with limit 3 — expect exactly 3 events --
+      const page1Res = await request.get(`${apiUrl}/api/events?page=1&limit=3`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      expect(page1Res.status()).toBe(200);
+      const { data: page1, pagination } = await page1Res.json();
+      expect((page1 as any[]).length).toBe(3);
+      expect(pagination.total).toBeGreaterThanOrEqual(3);
+
+      // -- Step 2: GET page 2 with limit 3 — expect a different set of events --
+      const page2Res = await request.get(`${apiUrl}/api/events?page=2&limit=3`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      expect(page2Res.status()).toBe(200);
+      const { data: page2 } = await page2Res.json();
+      expect((page2 as any[]).length).toBeGreaterThan(0);
+
+      // -- Step 3: Assert no overlap between page 1 and page 2 IDs --
+      const ids1 = (page1 as any[]).map((e: any) => e.id);
+      const ids2 = (page2 as any[]).map((e: any) => e.id);
+      const overlap = ids1.filter((id: number) => ids2.includes(id));
+      expect(overlap.length).toBe(0);
+      log.info(`TC-EB-R204: page1=${ids1.length} events, page2=${ids2.length} events — no overlap ✓`);
+    }
+  );
+
+  test(
+    'TC-EB-R205: GET /api/events?search= with no matching keyword returns empty data array',
+    { tag: '@regression' },
+    async ({ request }) => {
+      const token = await getAuthToken(request);
+      const noMatchKeyword = 'XQZNOEVENTSHOULDMATCH99999';
+
+      // -- Step 1: GET events with a keyword that matches nothing --
+      const response = await request.get(
+        `${apiUrl}/api/events?search=${encodeURIComponent(noMatchKeyword)}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      expect(response.status()).toBe(200);
+
+      // -- Step 2: Assert data array is empty and total is 0 --
+      const body = await response.json();
+      expect(Array.isArray(body.data)).toBe(true);
+      expect((body.data as any[]).length).toBe(0);
+      log.info(`TC-EB-R205: search="${noMatchKeyword}" → 0 events returned ✓`);
+    }
+  );
+
+  test(
+    'TC-EB-R206: GET /api/events?search=X&category=Y combined filter returns only matching events',
+    { tag: '@regression' },
+    async ({ request }) => {
+      const token = await getAuthToken(request);
+
+      // -- Step 1: GET events filtered by both search keyword and category --
+      const response = await request.get(
+        `${apiUrl}/api/events?search=${encodeURIComponent(searchKeyword)}&category=${encodeURIComponent(filterCategory)}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      expect(response.status()).toBe(200);
+
+      // -- Step 2: Assert all returned events match both conditions --
+      const { data: events } = await response.json();
+      expect((events as any[]).length).toBeGreaterThan(0);
+      const keyword = searchKeyword.toLowerCase();
+      for (const e of events as any[]) {
+        expect(e.category).toBe(filterCategory);
+        const titleMatch = (e.title as string).toLowerCase().includes(keyword);
+        const descMatch = ((e.description as string) ?? '').toLowerCase().includes(keyword);
+        const venueMatch = ((e.venue as string) ?? '').toLowerCase().includes(keyword);
+        expect(titleMatch || descMatch || venueMatch).toBe(true);
+      }
+      log.info(
+        `TC-EB-R206: search="${searchKeyword}" + category="${filterCategory}" → ${(events as any[]).length} event(s), all match ✓`
+      );
+    }
+  );
+
+  // ─── UI Guards ────────────────────────────────────────────────────────────
+
+  test(
+    'TC-EB-R301: /events page redirects unauthenticated user to /login',
+    { tag: '@regression' },
+    async ({ page }) => {
+      test.setTimeout(30000);
+
+      // -- Step 1: Navigate to /events without any active session --
+      await page.goto(`${baseUrl}/events`);
+
+      // -- Step 2: Assert redirect to /login --
+      await expect(page).toHaveURL(`${baseUrl}/login`);
+      log.info('TC-EB-R301: Unauthenticated /events → /login redirect confirmed ✓');
+    }
+  );
+
+  test(
+    'TC-EB-R302: /events/:id page redirects unauthenticated user to /login',
+    { tag: '@regression' },
+    async ({ page }) => {
+      test.setTimeout(30000);
+
+      // -- Step 1: Navigate directly to an event detail page with no session --
+      await page.goto(`${baseUrl}/events/${knownEvent.id}`);
+
+      // -- Step 2: Assert redirect to /login --
+      await expect(page).toHaveURL(`${baseUrl}/login`);
+      log.info(`TC-EB-R302: Unauthenticated /events/${knownEvent.id} → /login redirect confirmed ✓`);
+    }
+  );
+
+  test(
+    'TC-EB-R303: Clearing the search input restores the full event list',
+    { tag: '@regression' },
+    async ({ page }) => {
+      test.setTimeout(60000);
+      const loginPage = new LoginPage(page);
+      const eventsPage = new EventsPage(page);
+
+      // -- Step 1: Login and navigate to /events — capture unfiltered count --
+      await loginPage.goto(baseUrl);
+      await loginPage.login(validUser.email, validUser.password);
+      await expect(loginPage.logoutBtn).toBeVisible();
+      await eventsPage.goto(baseUrl);
+      await expect(eventsPage.bookNowBtns.first()).toBeVisible();
+      const initialCount = await eventsPage.bookNowBtns.count();
+
+      // -- Step 2: Search for a keyword to narrow results --
+      await eventsPage.search(searchKeyword);
+      await page.waitForLoadState('networkidle');
+      const filteredCount = await eventsPage.bookNowBtns.count();
+      expect(filteredCount).toBeLessThanOrEqual(initialCount);
+
+      // -- Step 3: Clear the search input --
+      await eventsPage.searchInput.clear();
+      await page.waitForLoadState('networkidle');
+
+      // -- Step 4: Assert event count is restored to at least the filtered count --
+      await expect(eventsPage.bookNowBtns.first()).toBeVisible();
+      const restoredCount = await eventsPage.bookNowBtns.count();
+      expect(restoredCount).toBeGreaterThanOrEqual(filteredCount);
+      log.info(
+        `TC-EB-R303: Search cleared — count ${filteredCount} → ${restoredCount} (restored) ✓`
+      );
+    }
+  );
+
+  test(
+    'TC-EB-R304: Event detail page shows available seats count matching API response',
+    { tag: '@regression' },
+    async ({ page, request }) => {
+      test.setTimeout(60000);
+      const loginPage = new LoginPage(page);
+      const detailPage = new EventDetailPage(page);
+
+      // -- Step 1: Fetch availableSeats from API --
+      const token = await getAuthToken(request);
+      const apiRes = await request.get(`${apiUrl}/api/events/${knownEvent.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const { data: event } = await apiRes.json();
+      const expectedSeats = event.availableSeats as number;
+
+      // -- Step 2: Login and navigate to the event detail page --
+      await loginPage.goto(baseUrl);
+      await loginPage.login(validUser.email, validUser.password);
+      await expect(loginPage.logoutBtn).toBeVisible();
+      await detailPage.goto(baseUrl, knownEvent.id);
+
+      // -- Step 3: Assert the seats count is visible on the page --
+      await expect(detailPage.availableSeatsText).toBeVisible();
+      await expect(detailPage.availableSeatsText).toContainText(String(expectedSeats));
+      log.info(
+        `TC-EB-R304: Event ${knownEvent.id} shows availableSeats = ${expectedSeats} on detail page ✓`
+      );
+    }
+  );
+
   test(
     'TC-EB108: /events/:id detail page loads with event title, price, and booking form',
     { tag: '@sanity' },

@@ -12,12 +12,16 @@ export class SandboxPage {
   // Amber info banner on /admin/events — always visible, mentions 6-event limit
   readonly adminEventsBanner: Locator;
 
+  // Conditional warning banner on /bookings — appears when approaching the 9-booking limit
+  readonly bookingsBanner: Locator;
+
   readonly logoutBtn: Locator;
 
   constructor(page: Page) {
     this.page = page;
     this.eventsBanner = page.getByText(/sandbox holds up to/i);
     this.adminEventsBanner = page.getByText(/you can add up to/i);
+    this.bookingsBanner = page.getByText(/sandbox holds up to/i);
     this.logoutBtn = page.getByRole('button', { name: 'Logout' });
   }
 

@@ -1268,6 +1268,49 @@ test.describe('AdminEventManagement', () => {
     }
   );
 
+  // ─── Auth Guards ──────────────────────────────────────────────────────────
+
+  test(
+    'TC-E-A201: GET /api/events/:id without auth token returns 401',
+    { tag: '@regression' },
+    async ({ request }) => {
+      // -- Step 1: GET a specific event without Authorization header --
+      const response = await request.get(`${apiUrl}/api/events/${staticEvent.id}`);
+
+      // -- Step 2: Assert 401 Unauthorized --
+      expect(response.status()).toBe(401);
+      log.info(`TC-E-A201: GET /api/events/${staticEvent.id} without auth → ${response.status()} ✓`);
+    }
+  );
+
+  test(
+    'TC-E-A202: PUT /api/events/:id without auth token returns 401',
+    { tag: '@regression' },
+    async ({ request }) => {
+      // -- Step 1: PUT to a specific event without Authorization header --
+      const response = await request.put(`${apiUrl}/api/events/${staticEvent.id}`, {
+        data: { ...newEvent, title: 'Unauthorized Update Attempt' },
+      });
+
+      // -- Step 2: Assert 401 Unauthorized --
+      expect(response.status()).toBe(401);
+      log.info(`TC-E-A202: PUT /api/events/${staticEvent.id} without auth → ${response.status()} ✓`);
+    }
+  );
+
+  test(
+    'TC-E-A203: DELETE /api/events/:id without auth token returns 401',
+    { tag: '@regression' },
+    async ({ request }) => {
+      // -- Step 1: DELETE a specific event without Authorization header --
+      const response = await request.delete(`${apiUrl}/api/events/${staticEvent.id}`);
+
+      // -- Step 2: Assert 401 Unauthorized --
+      expect(response.status()).toBe(401);
+      log.info(`TC-E-A203: DELETE /api/events/${staticEvent.id} without auth → ${response.status()} ✓`);
+    }
+  );
+
   test(
     'TC-E-R505: Cancelling the delete confirmation dialog leaves the event intact in the admin list',
     { tag: '@regression' },
