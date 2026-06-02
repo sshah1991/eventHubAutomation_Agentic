@@ -12,7 +12,7 @@
 |------|-----------|-------|
 | Happy Path | 6 | TC-001–006 |
 | Business Rules | 9 | TC-100–108 |
-| Security | 6 | TC-200–205 |
+| Security | 9 | TC-200–208 |
 | Negative / Error | 8 | TC-300–307 |
 | Edge Cases | 7 | TC-400–406 |
 | UI State | 6 | TC-500–505 |
@@ -403,6 +403,57 @@
 - No event created
 
 **Business Rule**: API Reference — Bearer Token required for Events  
+**Suggested Layer**: API  
+**Test Type**: REGRESSION
+
+---
+
+### TC-206: Get Event by ID API Rejects Request Without Token
+**Category**: Security  
+**Priority**: P0  
+**Preconditions**: No auth token; a valid event ID exists  
+**Steps**:
+1. `GET /api/events/:id` with no Authorization header
+
+**Expected Results**:
+- HTTP 401 `"Unauthorized"`
+- No event data returned
+
+**Business Rule**: API Reference — Bearer Token required for all Events endpoints  
+**Suggested Layer**: API  
+**Test Type**: REGRESSION
+
+---
+
+### TC-207: Update Event API Rejects Request Without Token
+**Category**: Security  
+**Priority**: P0  
+**Preconditions**: No auth token  
+**Steps**:
+1. `PUT /api/events/:id` with no Authorization header and a valid update payload
+
+**Expected Results**:
+- HTTP 401 `"Unauthorized"`
+- Event is not modified
+
+**Business Rule**: API Reference — Bearer Token required for all Events endpoints  
+**Suggested Layer**: API  
+**Test Type**: REGRESSION
+
+---
+
+### TC-208: Delete Event API Rejects Request Without Token
+**Category**: Security  
+**Priority**: P0  
+**Preconditions**: No auth token  
+**Steps**:
+1. `DELETE /api/events/:id` with no Authorization header
+
+**Expected Results**:
+- HTTP 401 `"Unauthorized"`
+- Event is not deleted
+
+**Business Rule**: API Reference — Bearer Token required for all Events endpoints  
 **Suggested Layer**: API  
 **Test Type**: REGRESSION
 
