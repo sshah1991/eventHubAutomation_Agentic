@@ -31,6 +31,7 @@
     "city": "Bangalore",
     "venue": "Automation Test Venue",
     "date": "2030-12-31",
+    "eventDate": "2030-12-31T00:00:00.000Z",
     "price": 500,
     "totalSeats": 10
   }

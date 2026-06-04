@@ -24,7 +24,7 @@
   },
   "staticEvent": {
     "id": 1,
-    "title": "Tech Conference Bangalore"
+    "title": "World Tech Summit"
   },
   "pastDate": "2020-01-01",
   "xssTitle": "<img src=x onerror=alert('xss')>",

@@ -187,8 +187,8 @@ test.describe('CrossUserSecurity', () => {
           headers: { Authorization: `Bearer ${tokenB}` },
         });
 
-        // -- Step 3: Assert 403 Forbidden --
-        expect(deleteResponse.status()).toBe(403);
+        // -- Step 3: Assert 403 or 404 (API uses 404 to obscure resource existence) --
+        expect([403, 404]).toContain(deleteResponse.status());
 
         // -- Step 4: Verify User A's booking still exists after the unauthorized attempt --
         const verifyRes = await request.get(`${apiUrl}/api/bookings/${bookingId}`, {
@@ -224,8 +224,8 @@ test.describe('CrossUserSecurity', () => {
           data: { ...testEventTemplate, title: 'Hijacked Event Title' },
         });
 
-        // -- Step 3: Assert 403 Forbidden --
-        expect(putResponse.status()).toBe(403);
+        // -- Step 3: Assert 403 or 404 (API uses 404 to obscure resource existence) --
+        expect([403, 404]).toContain(putResponse.status());
 
         // -- Step 4: Verify the event title is unchanged --
         const verifyRes = await request.get(`${apiUrl}/api/events/${eventId}`, {
@@ -260,8 +260,8 @@ test.describe('CrossUserSecurity', () => {
           headers: { Authorization: `Bearer ${tokenB}` },
         });
 
-        // -- Step 3: Assert 403 Forbidden --
-        expect(deleteResponse.status()).toBe(403);
+        // -- Step 3: Assert 403 or 404 (API uses 404 to obscure resource existence) --
+        expect([403, 404]).toContain(deleteResponse.status());
 
         // -- Step 4: Verify User A's event still exists after the unauthorized attempt --
         const verifyRes = await request.get(`${apiUrl}/api/events/${eventId}`, {
@@ -406,8 +406,8 @@ test.describe('CrossUserSecurity', () => {
           headers: { Authorization: `Bearer ${tokenB}` },
         });
 
-        // -- Step 3: Assert 403 Forbidden --
-        expect(response.status()).toBe(403);
+        // -- Step 3: Assert 403 or 404 (API uses 404 to obscure resource existence) --
+        expect([403, 404]).toContain(response.status());
         log.info(`TC-CUS202: User B GET /api/events/${eventId} → ${response.status()} ✓`);
       } finally {
         if (eventId) await deleteEventViaApi(request, tokenA, eventId);

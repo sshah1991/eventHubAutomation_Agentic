@@ -45,8 +45,8 @@ export class BookingPage {
 
     // Quantity selector (event detail page)
     this.qtyIncreaseBtn = page.getByRole('button', { name: '+' });
-    this.qtyDecreaseBtn = page.getByRole('button', { name: '-' });
-    this.quantityDisplay = page.getByTestId('quantity-display');
+    this.qtyDecreaseBtn = page.getByRole('button', { name: '−' });
+    this.quantityDisplay = page.locator('#ticket-count');
 
     // Customer booking form (labels: "Full Name *", "Email *", "Phone Number *")
     this.customerNameInput = page.getByPlaceholder('Your full name');

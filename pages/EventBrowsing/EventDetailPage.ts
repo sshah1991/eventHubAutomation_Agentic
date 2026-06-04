@@ -17,7 +17,7 @@ export class EventDetailPage {
     this.qtyIncreaseBtn = page.getByRole('button', { name: '+' });
     this.qtyDecreaseBtn = page.getByRole('button', { name: '-' });
     this.logoutBtn = page.getByRole('button', { name: 'Logout' });
-    this.availableSeatsText = page.getByText(/available seats/i);
+    this.availableSeatsText = page.getByText(/\d+ \/ \d+ seats/);
   }
 
   async goto(baseUrl: string, eventId: number): Promise<void> {
