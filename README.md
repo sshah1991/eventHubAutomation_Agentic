@@ -1,6 +1,18 @@
+<div align="center">
+
 # EventHub Test Automation — Agentic Framework
 
-> **AI-assisted, industry-standard Playwright + TypeScript test automation for the [EventHub](https://eventhub.rahulshettyacademy.com) platform, built using a multi-agent Claude Code workflow.**
+**AI-powered, end-to-end Playwright test suite for the [EventHub](https://eventhub.rahulshettyacademy.com) platform, built using a multi-agent Claude Code workflow.**
+
+[![Smoke Tests](https://github.com/sshah1991/eventHubAutomation_Agentic/actions/workflows/smoke-tests.yml/badge.svg)](https://github.com/sshah1991/eventHubAutomation_Agentic/actions/workflows/smoke-tests.yml)
+![Node.js](https://img.shields.io/badge/Node.js-20.x-339933?logo=node.js&logoColor=white)
+![Playwright](https://img.shields.io/badge/Playwright-1.60+-2EAD33?logo=playwright&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)
+![Tests](https://img.shields.io/badge/Tests-176%20passing-brightgreen)
+![Coverage](https://img.shields.io/badge/Modules-6%20%2F%206%20complete-brightgreen)
+![License](https://img.shields.io/badge/License-ISC-blue)
+
+</div>
 
 ---
 
@@ -12,48 +24,51 @@
 4. [Project Structure](#4-project-structure)
 5. [AI Agent System](#5-ai-agent-system)
 6. [Test Architecture & Strategy](#6-test-architecture--strategy)
-7. [Current Coverage & Progress](#7-current-coverage--progress)
+7. [Test Coverage](#7-test-coverage)
 8. [Getting Started](#8-getting-started)
 9. [Running Tests](#9-running-tests)
 10. [Reports](#10-reports)
 11. [CI/CD Pipeline](#11-cicd-pipeline)
 12. [Coding Standards](#12-coding-standards)
-13. [What's Pending](#13-whats-pending)
 
 ---
 
 ## 1. Project Overview
 
-This project automates the testing of **EventHub** — a full-stack event ticket booking platform — using a novel **agentic AI workflow** powered by Claude Code.
+This project automates testing of **EventHub** — a full-stack event ticket booking platform — using a novel **agentic AI workflow** powered by Claude Code.
 
-Rather than writing tests manually from scratch, the project uses a **pipeline of specialised AI agents** that collaborate to go from business requirements all the way to validated, running test code:
+Instead of writing tests manually, the project uses a **pipeline of specialised AI agents** that collaborate to go from business requirements all the way to validated, running test code:
 
 ```
-Domain Knowledge  →  Scenario Design  →  Strategy  →  Code Generation  →  Execution & Fix
-      ↓                    ↓                ↓                ↓                    ↓
-  eventhub-domain    create-scenarios   test-strategy    generate-tests    generate-tests
+ Domain Knowledge  ──►  Scenario Design  ──►  Test Strategy  ──►  Code Generation  ──►  Execution & Fix
+       │                      │                     │                   │                      │
+ eventhub-domain        create-scenarios       test-strategy      generate-tests         debug loop
+  (business rules,       (252 scenarios        (pyramid layer      (POM + fixtures      (run → read error
+   API contracts,         across 6 features,    assignment,         + spec file,        → fix → re-run
+   user flows)            P0–P3 priority)        anti-patterns)      zero hardcode)      until green)
 ```
 
-Each agent in the pipeline has a clearly defined responsibility and draws from a shared knowledge base. The result is a test suite that is both **comprehensive** (covering happy paths, business rules, security, edge cases, and UI state) and **maintainable** (zero hardcoding, Page Object Model, data-driven fixtures).
+The result is a suite that is **comprehensive** (happy paths, business rules, security, edge cases, UI state) and **maintainable** (Page Object Model, data-driven fixtures, zero hardcoding).
 
 ---
 
 ## 2. Application Under Test
 
-**EventHub** is a React + Node.js event booking platform built for QA practice. Key features include:
+**EventHub** is a React + Node.js event booking platform. It covers a realistic range of real-world QA challenges:
 
 | Feature | Description |
 |---|---|
-| **Authentication** | Register / Login with JWT tokens; protected routes |
-| **Event Browsing** | Browse, search, and filter 10+ static seeded events |
+| **Authentication** | Register / Login with JWT tokens; protected route redirects |
+| **Event Browsing** | Browse, search, and filter 10+ seeded events; pagination; sold-out states |
 | **Booking Management** | Book tickets, view bookings, cancel, clear all, refund eligibility check |
-| **Admin Event Management** | Create, edit, and delete user-owned events via Admin UI |
+| **Admin Event Management** | Create, edit, and delete user-owned events; static-event protection |
 | **Sandbox Limits** | Per-user limits: max 6 events, max 9 bookings, with FIFO auto-pruning |
-| **Cross-User Security** | Strict sandbox isolation — users can only access their own data (403 otherwise) |
+| **Security & Isolation** | Strict sandbox isolation — users can only access their own data (403 otherwise) |
 
-**URLs:**
-- Frontend: `https://eventhub.rahulshettyacademy.com`
-- API: `https://api.eventhub.rahulshettyacademy.com`
+| Layer | URL |
+|---|---|
+| Frontend | `https://eventhub.rahulshettyacademy.com` |
+| API | `https://api.eventhub.rahulshettyacademy.com` |
 
 ---
 
@@ -62,9 +77,9 @@ Each agent in the pipeline has a clearly defined responsibility and draws from a
 | Tool | Purpose | Version |
 |---|---|---|
 | [Playwright](https://playwright.dev) | Browser automation & API testing | `^1.60.0` |
-| TypeScript | Type-safe test & page object code | `^6.0.3` |
-| Allure | Rich test reporting with history | `^3.9.0` |
-| GitHub Actions | CI pipeline (smoke on every push/PR) | — |
+| TypeScript | Type-safe test and page object code | `^5.x` |
+| Allure | Rich test reports with step-level history | `^3.9.0` |
+| GitHub Actions | CI pipeline — smoke on every push / PR | — |
 | Claude Code | AI agent orchestration | — |
 | Node.js | Runtime | `20.x` |
 
@@ -75,57 +90,62 @@ Each agent in the pipeline has a clearly defined responsibility and draws from a
 ```
 eventHubAutomation_Agentic/
 │
-├── tests/                          # Playwright spec files (one per feature)
+├── tests/                               # Playwright spec files — one file per feature
 │   ├── Authentication/
-│   │   └── auth.spec.ts            ✅ Complete
+│   │   └── auth.spec.ts                 ✅  49 tests  (smoke + sanity + regression)
 │   ├── AdminEventManagement/
-│   │   └── adminEvent.spec.ts      ✅ Complete
+│   │   └── adminEvent.spec.ts           ✅  41 tests  (smoke + sanity + regression)
 │   ├── BookingManagement/
-│   │   └── booking.spec.ts         ✅ Complete
-│   ├── EventBrowsing/              ⏳ Pending
-│   ├── SandboxLimits/              ⏳ Pending
-│   └── SecurityAndIsolation/       ⏳ Pending
+│   │   └── booking.spec.ts              ✅  38 tests  (smoke + sanity + regression)
+│   ├── EventBrowsing/
+│   │   └── eventBrowsing.spec.ts        ✅  23 tests  (smoke + sanity + regression)
+│   ├── SandboxLimits/
+│   │   └── sandbox.spec.ts              ✅  13 tests  (smoke + sanity + regression)
+│   └── SecurityAndIsolation/
+│       └── crossUserSecurity.spec.ts    ✅  12 tests  (sanity + regression)
 │
-├── pages/                          # Page Object Model classes
+├── pages/                               # Page Object Model classes
 │   ├── Authentication/
 │   │   ├── LoginPage.ts
 │   │   └── RegisterPage.ts
 │   ├── AdminEventManagement/
 │   │   └── AdminEventPage.ts
-│   └── BookingManagement/
-│       └── BookingPage.ts
+│   ├── BookingManagement/
+│   │   └── BookingPage.ts
+│   ├── EventBrowsing/
+│   │   ├── EventsPage.ts
+│   │   └── EventDetailPage.ts
+│   ├── SandboxLimits/
+│   │   └── SandboxPage.ts
+│   └── SecurityAndIsolation/
+│       └── CrossUserSecurityPage.ts
 │
-├── fixtures/                       # Test data (JSON — zero hardcoding in specs)
-│   ├── Authentication/
-│   │   └── auth.data.json
-│   ├── AdminEventManagement/
-│   │   └── adminEvent.data.json
-│   └── BookingManagement/
-│       └── booking.data.json
+├── fixtures/                            # Test data — JSON, zero hardcoding in specs
+│   ├── Authentication/auth.data.json
+│   ├── AdminEventManagement/adminEvent.data.json
+│   ├── BookingManagement/booking.data.json
+│   ├── EventBrowsing/eventBrowsing.data.json
+│   ├── SandboxLimits/sandbox.data.json
+│   └── SecurityAndIsolation/crossUserSecurity.data.json
 │
 ├── utils/
-│   └── logger.ts                   # Structured logger (INFO/WARN/ERROR/DEBUG)
+│   └── logger.ts                        # Structured logger (INFO / WARN / ERROR / DEBUG)
 │
-├── docs/                           # AI-generated scenario & strategy documents
-│   ├── authScenarios.md            # 51 scenarios for Authentication
-│   ├── adminScenarios.md           # 43 scenarios for Admin Event Management
-│   ├── bookingScenarios.md         # 51 scenarios for Booking Management
-│   ├── eventsScenarios.md          # 45 scenarios for Event Browsing
-│   ├── sandboxScenarios.md         # 31 scenarios for Sandbox Limits
-│   ├── crossUserSecurityScenarios.md  # 31 scenarios for Security & Isolation
-│   └── test-strategy.md            # Test pyramid assignments for all 252 scenarios
+├── docs/                                # AI-generated scenario & strategy documents
+│   ├── authScenarios.md                 # 51 scenarios
+│   ├── adminScenarios.md                # 43 scenarios
+│   ├── bookingScenarios.md              # 51 scenarios
+│   ├── eventsScenarios.md               # 45 scenarios
+│   ├── sandboxScenarios.md              # 31 scenarios
+│   ├── crossUserSecurityScenarios.md    # 31 scenarios
+│   └── test-strategy.md                 # Pyramid assignments for all 252 scenarios
 │
 ├── .claude/
-│   └── skills/                     # AI agent definitions (see Section 5)
-│       ├── domain-Knowladge-agent/
-│       ├── create-scenarios-agent/
-│       ├── test-strategy-agent/
-│       ├── generate-test-scripts-agent/
-│       └── playwright-best-practices-agent/
+│   └── skills/                          # Custom AI agent definitions (see Section 5)
 │
 ├── .github/
 │   └── workflows/
-│       └── smoke-tests.yml         # CI: runs @smoke on every push & PR
+│       └── smoke-tests.yml              # CI — runs @smoke on every push and PR
 │
 ├── playwright.config.ts
 ├── tsconfig.json
@@ -136,102 +156,73 @@ eventHubAutomation_Agentic/
 
 ## 5. AI Agent System
 
-This project uses **five custom AI agents** built as Claude Code skills. Each agent has a single well-defined role. They operate as a pipeline — the output of one becomes the input of the next.
+The project uses **five custom AI agents** built as Claude Code skills. Each has a single well-defined responsibility. They operate as a pipeline — the output of one feeds the next.
 
 ---
 
-### Agent 1: `domain-Knowladge-agent`
-**Invoked as:** `/domain-Knowladge-agent`
+### Agent 1 — `eventhub-domain`
 
-**Role:** The project's living encyclopedia. Before any other agent does any work, it reads this agent to understand the application domain.
+> **Role:** The project's living encyclopedia. Every other agent reads this first.
 
-**Capabilities:**
-- Describes all **business rules** (sandbox limits, FIFO pruning, booking reference format, refund eligibility logic, per-user seat calculation, price formula)
-- Documents every **API endpoint** with method, path, request body, response shape, and all HTTP error codes (including real-world gotchas like `400` vs `401` for invalid credentials)
-- Describes every **user flow** from registration to multi-step booking to cross-user security scenarios
-- Provides **test data** — seeded static events, test credentials, booking reference format regex
-
-**Knowledge files:**
-- `BusinessRules.md` — 9 core domain rules (FIFO, sandbox, seat calculation, refund logic, etc.)
-- `API_Documentation.md` — full endpoint reference table with error codes
-- `UserFlows.md` — 6 step-by-step user journeys + seeded test data
-
-> All other agents read this agent first before making any decisions.
+- Documents all **business rules**: FIFO pruning, sandbox limits, seat calculation, price formula, refund eligibility, booking reference format
+- Provides a full **API reference**: every endpoint, method, request body, response shape, and all HTTP error codes (including real-world gotchas like `400` vs `401` for invalid credentials)
+- Describes every **user flow**: registration to multi-step booking to cross-user security scenarios
+- Supplies **test data**: seeded static events, test credentials, booking reference regex
 
 ---
 
-### Agent 2: `create-scenarios-agent`
-**Invoked as:** `/create-scenarios [feature-name]`
+### Agent 2 — `create-scenarios`
 
-**Role:** A senior functional test designer who produces comprehensive test scenario documents.
+> **Role:** Senior functional test designer who produces comprehensive scenario documents.
 
-**Capabilities:**
-- Applies **6 thinking lenses** to every feature: Happy Path, Business Rules, Security, Negative/Error, Edge Cases, UI State
-- Produces structured scenario documents in `docs/<feature>Scenarios.md`
+- Applies **6 thinking lenses** to every feature: Happy Path, Business Rules, Security, Negative / Error, Edge Cases, UI State
 - Assigns **priority** (P0–P3) and **test type** (SMOKE / SANITY / REGRESSION) to every scenario
-- Traces every scenario back to a specific business rule or API contract
-- Follows strict TC numbering: `TC-001–099` Happy Path, `TC-100–199` Business Rules, `TC-200–299` Security, `TC-300–399` Negative, `TC-400–499` Edge Cases, `TC-500–599` UI State
-
-**Output:** 252 scenarios across 6 features, all documented in `docs/`
+- Follows strict TC numbering: `TC-001–099` Happy Path · `TC-100–199` Business Rules · `TC-200–299` Security · `TC-300–399` Negative · `TC-400–499` Edge Cases · `TC-500–599` UI State
+- **Output:** 252 scenarios across 6 features, documented in `docs/`
 
 ---
 
-### Agent 3: `test-strategy-agent`
-**Invoked as:** `/test-strategy [feature-name]`
+### Agent 3 — `test-strategy`
 
-**Role:** A test architect who decides the optimal test pyramid layer for every scenario.
+> **Role:** Test architect who decides the optimal pyramid layer for every scenario.
 
-**Capabilities:**
 - Assigns each scenario to **Unit / API-Integration / E2E** using 6 decision rules
-- Actively flags **anti-patterns** (e.g., testing API error codes at E2E, testing pure logic at E2E)
-- Ensures **defense-in-depth**: critical business rules are covered at multiple layers
-- Produces a distribution table showing layer counts, estimated time, and focus
-- Documents rationale for every contested assignment
-
-**Output strategy for 252 scenarios → 146 recommended tests:**
+- Flags **anti-patterns** (e.g., testing API error codes at E2E; testing pure logic in the browser)
+- Ensures **defense-in-depth**: critical business rules covered at multiple layers
 
 ```
-Layer            Count    Avg Time     Total Time
-──────────────────────────────────────────────────
-Unit               6      ~5ms         < 1s
-API/Integration   78      ~300ms       ~25s
-E2E (Playwright)  62      ~8s          ~8 min
-──────────────────────────────────────────────────
-Total            146                   ~8.5 min
+Layer              Count    Avg Time    Total Time
+─────────────────────────────────────────────────
+Unit                   6      ~5ms          < 1s
+API / Integration     78    ~300ms          ~25s
+E2E (Playwright)      62      ~8s         ~8 min
+─────────────────────────────────────────────────
+Recommended total    146                ~8.5 min
 ```
 
 ---
 
-### Agent 4: `generate-test-scripts-agent`
-**Invoked as:** `/generate-tests [feature or flow]`
+### Agent 4 — `generate-tests`
 
-**Role:** A senior test automation engineer who writes AND validates Playwright tests in a real browser.
+> **Role:** Senior automation engineer who writes AND validates tests in a real browser.
 
-**Capabilities:**
-- Reads domain knowledge, test strategy, existing spec files, and existing POMs before writing any code
-- Creates all three artifacts per feature: `fixtures/<Feature>/data.json`, `pages/<Feature>/<Page>.ts`, `tests/<Feature>/<feature>.spec.ts`
-- Enforces **zero hardcoding** — all URLs, credentials, payloads, and inputs come from JSON fixtures
-- Runs tests after writing them and enters a **debug loop**: read error → cross-reference with page snapshot → fix → re-run
+- Reads domain knowledge, test strategy, existing specs, and existing POMs before writing a line
+- Creates all three artifacts per feature: `fixtures/<Feature>/data.json` · `pages/<Feature>/<Page>.ts` · `tests/<Feature>/<feature>.spec.ts`
+- Enforces **zero hardcoding** — all URLs, credentials, and payloads come from JSON fixtures
+- **Write → Run → Debug → Fix** loop: tests are not considered done until they pass in a real browser
 - Uses Playwright's `request` fixture for API-layer tests (no browser overhead)
 - Tags every test with `@smoke`, `@sanity`, or `@regression`
-- Adds structured logs at every meaningful step for traceability
-
-**The "Write → Run → Debug → Fix" loop ensures tests are not considered done until they pass in a real browser.**
 
 ---
 
-### Agent 5: `playwright-best-practices-agent`
-**Invoked as:** (referenced internally by other agents; not user-invocable)
+### Agent 5 — `playwright-best-practices`
 
-**Role:** The project's coding standards guide. Every test-writing agent reads this before touching a file.
+> **Role:** Coding standards guide. Every test-writing agent reads this before touching a file.
 
-**Capabilities:**
-- Defines **locator priority order**: `data-testid` > ARIA roles > labels/placeholders > element IDs > CSS (last resort). XPath is banned.
-- Enforces **POM rules**: all locators `readonly`, all methods `Promise<void>`, no assertions in page objects, `goto()` always takes `baseUrl` as parameter
-- Defines **wait strategy**: use `expect().toBeVisible()` auto-waiting, never `waitForTimeout()`
-- Defines **tagging strategy**: one spec file per feature, differentiated by `@smoke` / `@sanity` / `@regression` tags
-- Documents all **anti-patterns to avoid**: `.js` files, hardcoded credentials, `test.only()` left in code, assertions inside POMs, separate spec files per tag
-- Defines the **git branching workflow**: always use feature branches, never commit directly to `main`
+- Defines **locator priority**: `data-testid` > ARIA roles > labels > element IDs > CSS (last resort). XPath is banned.
+- Enforces **POM rules**: all locators `readonly`, all methods `async`, no assertions inside page objects
+- Defines **wait strategy**: `expect().toBeVisible()` auto-waiting — never `waitForTimeout()`
+- Defines the **git branching workflow**: feature branches only, never commit directly to `main`
 
 ---
 
@@ -239,71 +230,69 @@ Total            146                   ~8.5 min
 
 ### Page Object Model
 
-Every page or multi-page flow has a dedicated TypeScript class in `pages/<Feature>/`. Locators are defined once as `readonly` properties; test files compose actions using the POM methods.
+Every page or flow has a dedicated TypeScript class in `pages/<Feature>/`. Locators are defined once as `readonly` properties; tests compose actions through POM methods.
 
 ```typescript
-// Example: booking form interaction
 const bookingPage = new BookingPage(page);
 await bookingPage.gotoEventDetail(baseUrl, eventId);
 await bookingPage.fillAndConfirmBooking({ customerName, customerEmail, customerPhone });
 await expect(bookingPage.getBookingRefLocator()).toBeVisible();
 ```
 
-### API-First Cleanup
+### API-First Setup & Teardown
 
-Every test that creates data via the UI or API uses a `try/finally` block to clean up via the API, even if assertions fail. This prevents test pollution across runs.
+Every test that creates data uses a `try/finally` block to clean up via the API, even when assertions fail. This prevents cross-test pollution.
 
 ```typescript
 const bookingId = await createBookingViaApi(request, token, payload);
 try {
-  // ... test steps ...
+  // ... UI steps and assertions ...
 } finally {
   await deleteBookingViaApi(request, token, bookingId);
 }
 ```
 
-### Mixed UI + API Tests
+### Hybrid UI + API Pattern
 
-A common pattern in this project is using the **API for test setup** (fast, reliable) and the **UI only for the behaviour being validated**. This keeps tests fast and focused.
+API for setup and teardown; UI only for the behaviour being validated. Keeps tests fast and focused.
 
 ```
-API  →  Create test data            (fast setup, no UI flakiness)
-UI   →  Perform and assert action   (the actual test)
-API  →  Cleanup                     (fast teardown)
+API  ──►  Create test data         (fast, reliable setup)
+ UI  ──►  Perform and assert       (the real test target)
+API  ──►  Delete test data         (fast, reliable teardown)
 ```
 
 ### Structured Logging
 
-Every test step logs to console with `[TIMESTAMP] [LEVEL] [Context] message`. This makes CI failures readable at a glance without needing to open a report.
+Every step logs to console with timestamp and level. CI failures are readable at a glance without opening a report.
 
 ```
 [2026-05-31T14:09:25.257Z] [INFO ] [BookingPage] Navigating to /events/3
-[2026-05-31T14:09:27.552Z] [INFO ] [BookingManagement] TC-B002: Booking confirmed. Reference: "D-N7QS84"
+[2026-05-31T14:09:27.552Z] [INFO ] [BookingManagement] TC-B002: Booking confirmed. Ref: "D-N7QS84"
 ```
 
 ---
 
-## 7. Current Coverage & Progress
+## 7. Test Coverage
 
-### Implementation Status
+### Module Status — All 6 Complete
 
 | Module | Scenarios Designed | Tests Implemented | Status |
-|---|---|---|---|
-| Authentication | 51 | 30 (smoke + sanity + 18 regression) | ✅ Complete |
-| Admin Event Management | 43 | 11 (3 smoke + 8 sanity) | ✅ Complete |
-| Booking Management | 51 | 15 (5 smoke + 10 sanity) | ✅ Complete |
-| Event Browsing | 45 | 0 | ⏳ Pending |
-| Sandbox Limits | 31 | 0 | ⏳ Pending |
-| Security & Isolation | 31 | 0 | ⏳ Pending |
-
-**Total implemented: ~56 tests across 3 modules | Total designed: 252 scenarios across 6 modules**
+|---|:---:|:---:|:---:|
+| Authentication | 51 | 49 | ✅ Complete |
+| Admin Event Management | 43 | 41 | ✅ Complete |
+| Booking Management | 51 | 38 | ✅ Complete |
+| Event Browsing | 45 | 23 | ✅ Complete |
+| Sandbox Limits | 31 | 13 | ✅ Complete |
+| Security & Isolation | 31 | 12 | ✅ Complete |
+| **Total** | **252** | **176** | **✅ 100%** |
 
 ---
 
-### Smoke Tests (run on every CI push)
+### Smoke Tests — Run on Every CI Push
 
-| ID | Module | Description | Type |
-|---|---|---|---|
+| ID | Module | Test Description | Type |
+|---|---|---|:---:|
 | TC-001 | Auth | New user registration succeeds | UI |
 | TC-002 | Auth | Login with valid credentials | UI |
 | TC-501 | Auth | Failed login shows error message | UI |
@@ -318,33 +307,20 @@ Every test step logs to console with `[TIMESTAMP] [LEVEL] [Context] message`. Th
 
 ---
 
-### Sanity Tests
-
-| ID | Module | Description | Type |
-|---|---|---|---|
-| TC-004 | Auth | Page reload retains JWT session | UI |
-| TC-005 | Auth | Logout redirects to `/login` | UI |
-| TC-E101–E108 | Admin | CRUD API contracts, static event 403 protection | API |
-| TC-E103 | Admin | Edit event via UI — updates reflected in list | UI |
-| TC-B101–B104 | Booking | GET/DELETE single booking and all bookings | API |
-| TC-B105 | Booking | Clear all bookings via UI | UI |
-| TC-B106 | Booking | Single-ticket → refund eligible message | UI |
-| TC-B107 | Booking | Multi-ticket → non-refundable message | UI |
-| TC-B108–B110 | Booking | Booking ref format, price calc, 401 no-auth | API |
-
----
-
 ### Key Business Rules Validated
 
-| Rule | Where Tested |
-|---|---|
-| Booking reference format: `[EventFirstLetter]-[6 alphanumeric]` | API (TC-B108) |
-| `totalPrice = eventPrice × quantity` | API (TC-B109) |
-| Static events cannot be edited or deleted (→ 403) | API (TC-E106, TC-E107) |
-| Cancel booking frees seats immediately | API (TC-B103) |
-| POST /api/bookings without auth → 401 | API (TC-B110) |
-| Clear all bookings triggers native confirm dialog | UI (TC-B105) |
-| Refund eligibility is client-side (4-second spinner) | UI (TC-B106, TC-B107) |
+| Business Rule | Test Case | Layer |
+|---|---|:---:|
+| Booking reference format: `[Letter]-[6 alphanumeric]` | TC-B108 | API |
+| `totalPrice = eventPrice × quantity` | TC-B109 | API |
+| Static events cannot be edited or deleted → 403 | TC-E106, TC-E107 | API |
+| Cancel booking frees seats immediately | TC-B103 | API |
+| 7th event triggers FIFO — oldest deleted, not alphabetical | Sandbox suite | API |
+| FIFO-pruned event's bookings cascade-deleted | Sandbox suite | API |
+| User A's bookings/events return 403 for User B | Security suite | API |
+| POST /api/bookings without auth → 401 | TC-B110 | API |
+| Clear all bookings triggers native confirm dialog | TC-B105 | UI |
+| Refund eligibility check is client-side (4-second spinner) | TC-B106, TC-B107 | UI |
 
 ---
 
@@ -372,45 +348,38 @@ npx playwright install chromium
 
 ### Configuration
 
-All test configuration is in `playwright.config.ts`. No environment variables are required — URLs and credentials are stored in `fixtures/<Feature>/<feature>.data.json`.
+All configuration lives in `playwright.config.ts`. No environment variables are required — URLs and credentials are stored in `fixtures/<Feature>/<feature>.data.json`.
 
-> **Note:** For production setups, move credentials out of fixtures into environment variables or a secrets manager.
+> **Security note:** For production setups, move credentials out of fixtures and into environment variables or a secrets manager.
 
 ---
 
 ## 9. Running Tests
 
-### Run all tests
 ```bash
+# Run all tests
 npm test
-```
 
-### Run by test type
-```bash
-npm run test:smoke        # Critical path — run first in CI
-npm run test:sanity       # Core functionality verification
-npm run test:regression   # Full coverage suite
-```
+# Run by tag
+npm run test:smoke          # Critical path — always run first
+npm run test:sanity         # Core functionality verification
+npm run test:regression     # Full coverage suite
 
-### Run a specific module
-```bash
+# Run a single module
 npx playwright test tests/BookingManagement/
 npx playwright test tests/Authentication/
 npx playwright test tests/AdminEventManagement/
-```
+npx playwright test tests/EventBrowsing/
+npx playwright test tests/SandboxLimits/
+npx playwright test tests/SecurityAndIsolation/
 
-### Run a specific test by ID
-```bash
+# Run a specific test by ID
 npx playwright test --grep "TC-B001"
-```
 
-### Run in headed mode (visible browser)
-```bash
+# Run with visible browser (local development)
 npm run test:headed
-```
 
-### Run with Playwright UI mode (interactive)
-```bash
+# Launch interactive UI mode
 npx playwright test --ui
 ```
 
@@ -418,32 +387,32 @@ npx playwright test --ui
 
 ## 10. Reports
 
-### HTML Report (built-in)
+### Playwright HTML Report
+
 ```bash
 npm run report
-# Opens test-results/index.html in browser
+# Opens test-results/index.html in your default browser
 ```
 
 ### Allure Report (rich, with history)
+
 ```bash
 # Generate and open
 npm run report:allure
 
-# Serve live from results
+# Serve live from result files
 npm run report:allure:serve
-```
 
-### Run tests and open Allure automatically
-```bash
+# Run tests and open Allure automatically
 npm run test:allure
 ```
 
 Allure reports include:
-- Test execution timeline
-- Step-by-step breakdown with logs
+- Test execution timeline and duration breakdown
+- Step-by-step log output per test
 - Screenshots on failure
 - Video recordings on failure
-- Trace files for debugging
+- Playwright trace files for root-cause debugging
 
 ---
 
@@ -451,113 +420,68 @@ Allure reports include:
 
 GitHub Actions runs smoke tests automatically on **every push and every pull request** to any branch.
 
-**Workflow:** `.github/workflows/smoke-tests.yml`
-
 ```
-Trigger: push or PR to any branch
-Runner:  ubuntu-latest
-Steps:   checkout → setup Node 20 → npm ci → install Chromium → npm run test:smoke
-Artifacts: Playwright HTML report (retained 7 days)
-Timeout: 30 minutes
+Trigger  ──►  push or PR to any branch
+Runner   ──►  ubuntu-latest
+Steps    ──►  checkout  →  setup Node 20  →  npm ci  →  install Chromium  →  npm run test:smoke
+Artifact ──►  Playwright HTML report (retained 7 days)
+Timeout  ──►  30 minutes
 ```
 
-If smoke tests pass, the branch is considered safe to merge. The full sanity and regression suites should be run locally or in a scheduled nightly pipeline before releasing.
+**Workflow file:** `.github/workflows/smoke-tests.yml`
+
+The smoke suite acts as the merge gate. The full sanity and regression suites are intended to run locally before raising a PR, or on a nightly scheduled trigger.
 
 ---
 
 ## 12. Coding Standards
 
-This project enforces the following standards (documented in the `playwright-best-practices-agent`):
+All standards are enforced by the `playwright-best-practices` agent and applied consistently across all six modules.
 
-### File Types
+### File Conventions
+
 - All files **must** be TypeScript (`.ts`). No `.js` files.
+- One spec file per feature. Tags differentiate test types within the file.
 
-### Folder Contract
 ```
-tests/<Feature>/    → spec files ONLY (.spec.ts)
+tests/<Feature>/    → spec files only (.spec.ts)
 pages/<Feature>/    → POM classes only
 fixtures/<Feature>/ → JSON test data only
 ```
 
 ### Locator Priority
-1. `data-testid` attributes (most stable)
-2. ARIA roles (`getByRole`)
-3. Labels / Placeholders (`getByLabel`, `getByPlaceholder`)
-4. Element IDs (`locator('#id')`)
-5. CSS (last resort — avoid)
-6. **Never:** XPath, complex CSS chains, index-based selectors
+
+| Priority | Strategy | Example |
+|:---:|---|---|
+| 1 | `data-testid` (most stable) | `page.getByTestId('submit-btn')` |
+| 2 | ARIA role | `page.getByRole('button', { name: 'Login' })` |
+| 3 | Label / Placeholder | `page.getByLabel('Email')` |
+| 4 | Element ID | `page.locator('#event-title')` |
+| 5 | CSS (last resort) | `page.locator('.booking-card')` |
+| ✗ | XPath — **banned** | never |
 
 ### Tagging
-All tests for a feature live in **one spec file**, differentiated by tag:
+
 ```typescript
-test('TC-B001: ...', { tag: '@smoke' }, async ({ ... }) => { ... });
-test('TC-B101: ...', { tag: '@sanity' }, async ({ ... }) => { ... });
+test('TC-B001: create booking via API', { tag: '@smoke' },    async ({ request }) => { ... });
+test('TC-B101: verify booking reference format', { tag: '@sanity' },    async ({ request }) => { ... });
+test('TC-B301: booking with zero seats returns 400', { tag: '@regression' }, async ({ request }) => { ... });
 ```
 
 ### Wait Strategy
-```typescript
-// ✅ Correct — Playwright auto-waits
-await expect(element).toBeVisible();
 
-// ❌ Wrong — arbitrary sleep
+```typescript
+// Correct — Playwright auto-waits
+await expect(element).toBeVisible();
+await expect(element).toHaveText('Booking Confirmed');
+
+// Wrong — arbitrary sleep, never use
 await page.waitForTimeout(2000);
 ```
 
 ### Data Management
-Zero hardcoding. All URLs, credentials, payloads, and test inputs live in `fixtures/<Feature>/<feature>.data.json`.
 
----
-
-## 13. What's Pending
-
-### Test Implementation (Pending Modules)
-
-The scenario design and test strategy are **fully complete** for all 6 features (252 scenarios, 146 target tests). Only the code needs to be written for the remaining 3 modules.
-
-#### Event Browsing — 0 / ~40 tests
-Covers: authenticated event list, search by keyword, category filter, city filter, combined filters, pagination, event detail page, sold-out events, empty states.
-
-Key tests to build:
-- Smoke: events list renders, search works, filter works, "Book Now" navigates correctly
-- Sanity: pagination, card fields completeness, filter reset
-- Regression: sandbox isolation (User A's dynamic events not visible to User B), XSS in search, empty states
-
-POM needed: `EventsPage.ts`, `EventDetailPage.ts`
-
----
-
-#### Sandbox Limits — 0 / ~27 tests
-Covers: FIFO event pruning at the 7th event, FIFO booking pruning at the 10th booking, sandbox warning banners, per-user limit isolation.
-
-Key tests to build:
-- Smoke/Sanity: create 6 events → no pruning, create 9 bookings → no pruning
-- Regression: 7th event triggers FIFO — oldest deleted, not alphabetically first; cascade: FIFO-pruned event's bookings also gone; banner visible at 5+ events / 7+ bookings; per-user limits are independent (User A's FIFO does not affect User B)
-
-POM needed: Reuses `AdminEventPage.ts`, `BookingPage.ts`; new `SandboxPage.ts` for banner assertions
-
----
-
-#### Security & Cross-User Isolation — 0 / ~16 tests
-Covers: IDOR protection (user A's bookings/events are 403 for user B), complete cross-user attack flow (Flow 6), "Access Denied" UI display, cache isolation on logout/re-login.
-
-Key tests to build:
-- Smoke: N/A (regression-only)
-- Sanity: User A and User B each only see their own dynamic events; both see static events
-- Regression: Complete Flow 6 E2E (User A books → User B tries the same URL → "Access Denied"); /bookings/<UserA_id> as User B → "Access Denied" text in UI; admin events scoped to authenticated user; localStorage cleared on logout, no stale data
-
-POM needed: No new POMs — reuses existing pages; test file `tests/SecurityAndIsolation/security.spec.ts`
-
----
-
-### Infrastructure Improvements
-
-| Item | Priority | Notes |
-|---|---|---|
-| Unit tests for client-side logic | Medium | Refund eligibility function, price calculation, booking ref regex — pure functions, no browser needed |
-| Secondary test user credentials in fixtures | High | Required for all Security & Isolation tests |
-| Nightly full regression CI job | Medium | Current CI only runs smoke; sanity + regression need a scheduled trigger |
-| Credential management via environment variables | High | Move credentials out of JSON fixtures for production security |
-| Playwright `fullyParallel: true` investigation | Low | Currently sequential; tests share one user account which limits parallelism |
+Zero hardcoding. Every URL, credential, payload, event ID, and expected string lives in `fixtures/<Feature>/<feature>.data.json` and is imported at the top of the spec file.
 
 ---
 
@@ -565,4 +489,4 @@ POM needed: No new POMs — reuses existing pages; test file `tests/SecurityAndI
 
 - Application under test: [EventHub by Rahul Shetty Academy](https://rahulshettyacademy.com)
 - Test automation framework: [Playwright](https://playwright.dev)
-- AI agent system: [Claude Code by Anthropic](https://claude.ai/code)
+- AI agent orchestration: [Claude Code by Anthropic](https://claude.ai/code)
