@@ -9,7 +9,7 @@ export default defineConfig({
     ['html', { outputFolder: 'test-results' }],
     ['allure-playwright', {
       outputFolder: 'allure-results',
-      suiteTitle: false,
+      suiteTitle: !!process.env.CI,
       environmentInfo: {
         project: 'EventHub Automation',
         environment: 'staging',
