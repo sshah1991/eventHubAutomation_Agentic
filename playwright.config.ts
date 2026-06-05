@@ -19,8 +19,7 @@ export default defineConfig({
   ],
   use: {
     browserName: 'chromium',
-   // headless: !!process.env.CI,
-    headless: false ,
+    headless: !!process.env.CI,
     viewport: { width: 1280, height: 720 },
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
